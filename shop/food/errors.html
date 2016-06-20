@@ -1,0 +1,112 @@
+
+              <pre style="color:#900;">2016-02-14 23:17:45 [11]<br>ERROR: 860342 delivery.php LINE 48<br>Array
+(
+    [0] => 
+  SELECT
+    kvfc_routes.route_id,
+    kvfc_routes.route_name,
+    kvfc_order_cycles.delivery_date,
+    kvfc_sites.site_id,
+    kvfc_sites.site_short,
+    kvfc_sites.site_long,
+    kvfc_sites.route_id,
+    kvfc_sites.inactive,
+    kvfc_hubs.hub_short,
+    tangible_count.num_orders
+  FROM
+    (kvfc_sites,
+    kvfc_order_cycles)
+  LEFT JOIN kvfc_routes USING(route_id)
+  LEFT JOIN kvfc_hubs ON (kvfc_routes.hub_id = kvfc_hubs.hub_id)
+  LEFT JOIN (
+    SELECT
+      site_id,
+      COUNT(DISTINCT(basket_id)) AS num_orders
+    FROM kvfc_basket_items
+    LEFT JOIN kvfc_baskets USING(basket_id)
+    LEFT JOIN kvfc_products USING(product_id,product_version)
+    WHERE
+      kvfc_baskets.delivery_id = 289
+      AND out_of_stock != quantity
+      AND kvfc_products.tangible = "1"
+    GROUP BY kvfc_baskets.site_id
+    ) AS tangible_count USING(site_id)
+  WHERE
+    kvfc_order_cycles.delivery_id = "289"
+    AND kvfc_sites.site_type = "customer"
+  GROUP BY
+    kvfc_sites.site_id
+  ORDER BY
+    kvfc_routes.route_name ASC,
+    kvfc_sites.site_long ASC
+    [1] => Table 'kvfc.kvfc_routes' doesn't exist
+)
+</pre>
+              <pre style="color:#900;">2016-02-14 23:17:51 [11]<br>ERROR: 860342 delivery.php LINE 48<br>Array
+(
+    [0] => 
+  SELECT
+    kvfc_routes.route_id,
+    kvfc_routes.route_name,
+    kvfc_order_cycles.delivery_date,
+    kvfc_sites.site_id,
+    kvfc_sites.site_short,
+    kvfc_sites.site_long,
+    kvfc_sites.route_id,
+    kvfc_sites.inactive,
+    kvfc_hubs.hub_short,
+    tangible_count.num_orders
+  FROM
+    (kvfc_sites,
+    kvfc_order_cycles)
+  LEFT JOIN kvfc_routes USING(route_id)
+  LEFT JOIN kvfc_hubs ON (kvfc_routes.hub_id = kvfc_hubs.hub_id)
+  LEFT JOIN (
+    SELECT
+      site_id,
+      COUNT(DISTINCT(basket_id)) AS num_orders
+    FROM kvfc_basket_items
+    LEFT JOIN kvfc_baskets USING(basket_id)
+    LEFT JOIN kvfc_products USING(product_id,product_version)
+    WHERE
+      kvfc_baskets.delivery_id = 289
+      AND out_of_stock != quantity
+      AND kvfc_products.tangible = "1"
+    GROUP BY kvfc_baskets.site_id
+    ) AS tangible_count USING(site_id)
+  WHERE
+    kvfc_order_cycles.delivery_id = "289"
+    AND kvfc_sites.site_type = "customer"
+  GROUP BY
+    kvfc_sites.site_id
+  ORDER BY
+    kvfc_routes.route_name ASC,
+    kvfc_sites.site_long ASC
+    [1] => Table 'kvfc.kvfc_routes' doesn't exist
+)
+</pre>
+              <pre style="color:#900;">2016-02-16 14:29:07 [11]<br>ERROR: 508 func.open_update_basket.php LINE 153<br>Requested basket has invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-16 14:29:21 [11]<br>ERROR: 508 func.open_update_basket.php LINE 153<br>Requested basket has invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-16 22:31:36 [11]<br>ERROR: 508 func.open_update_basket.php LINE 153<br>Requested basket has invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 14:46:23 [11]<br>ERROR: 508 func.open_basket.php LINE 135<br>create basket invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 14:46:29 [11]<br>ERROR: 508 func.open_basket.php LINE 135<br>create basket invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 14:46:44 [11]<br>ERROR: 508 func.open_basket.php LINE 135<br>create basket invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 14:47:42 [11]<br>ERROR: 508 func.open_update_basket.php LINE 153<br>Requested basket has invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 14:47:46 [11]<br>ERROR: 508 func.open_update_basket.php LINE 153<br>Requested basket has invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 14:48:01 [11]<br>ERROR: 508 func.open_basket.php LINE 135<br>create basket invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 14:49:50 [11]<br>ERROR: 508 func.open_update_basket.php LINE 153<br>Requested basket has invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 15:08:17 [11]<br>ERROR: 508 func.open_update_basket.php LINE 153<br>Requested basket has invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 15:14:05 [11]<br>ERROR: 508 func.open_update_basket.php LINE 153<br>Requested basket has invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 15:16:16 [11]<br>ERROR: 508 func.open_update_basket.php LINE 153<br>Requested basket has invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 15:16:29 [11]<br>ERROR: 508 func.open_update_basket.php LINE 153<br>Requested basket has invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 15:16:33 [11]<br>ERROR: 508 func.open_update_basket.php LINE 153<br>Requested basket has invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 15:28:25 [11]<br>ERROR: 508 func.open_update_basket.php LINE 153<br>Requested basket has invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 15:28:35 [11]<br>ERROR: 508 func.open_update_basket.php LINE 153<br>Requested basket has invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 15:28:57 [11]<br>ERROR: 508 func.open_basket.php LINE 135<br>create basket invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 15:35:06 [11]<br>ERROR: 508 func.open_basket.php LINE 135<br>create basket invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 16:48:27 [1]<br>ERROR: 508 func.open_update_basket.php LINE 153<br>Requested basket has invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 16:51:43 [1]<br>ERROR: 508 func.open_update_basket.php LINE 153<br>Requested basket has invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 16:52:00 [1]<br>ERROR: 508 func.open_update_basket.php LINE 153<br>Requested basket has invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 17:14:32 [1]<br>ERROR: 508 func.open_update_basket.php LINE 153<br>Requested basket has invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 17:24:32 [1]<br>ERROR: 508 func.open_update_basket.php LINE 153<br>Requested basket has invalid delivery_postal_code</pre>
+              <pre style="color:#900;">2016-02-17 18:32:06 [1]<br>ERROR: 508 func.open_update_basket.php LINE 153<br>Requested basket has invalid delivery_postal_code</pre>

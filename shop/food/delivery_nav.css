@@ -1,0 +1,19 @@
+#delivery_id_nav {
+  width:45%;
+  max-width:40rem;
+  margin:5px auto 0;
+  height:1.5em;
+  background-color:#eef;
+}
+#delivery_id_nav .prior,
+#delivery_id_nav .next {
+  display:block;
+  line-height:1.5;
+  padding:0 5px;
+}
+#delivery_id_nav .prior {
+  float:left;
+}
+#delivery_id_nav .next {
+  float:right;
+}
