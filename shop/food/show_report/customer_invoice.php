@@ -163,9 +163,36 @@ $query_product = '
     '.TABLE_PRODUCT_TYPES.'.prodtype,
     '.TABLE_PRODUCT_STORAGE_TYPES.'.storage_type,
     '.TABLE_PRODUCT_STORAGE_TYPES.'.storage_code,
-    '.NEW_TABLE_MESSAGES.'1.message AS customer_message,
-    '.NEW_TABLE_MESSAGES.'2.message AS product_message,
-    '.NEW_TABLE_MESSAGES.'3.message AS adjustment_group_memo
+	(
+		SELECT '.NEW_TABLE_MESSAGES.'.message
+		FROM '.NEW_TABLE_MESSAGES.'
+        JOIN '.NEW_TABLE_MESSAGE_TYPES.' 
+			ON '.NEW_TABLE_MESSAGES.'.message_type_id = '.NEW_TABLE_MESSAGE_TYPES.'.message_type_id 
+            AND '.NEW_TABLE_MESSAGE_TYPES.'.description = "customer notes to producer"
+        WHERE IFNULL('.NEW_TABLE_MESSAGES.'.referenced_key1, 0) > 0
+        AND '.NEW_TABLE_MESSAGES.'.referenced_key1 = '.NEW_TABLE_BASKET_ITEMS.'.bpid
+        LIMIT 1
+	) AS customer_message,
+	(
+		SELECT '.NEW_TABLE_MESSAGES.'.message
+		FROM '.NEW_TABLE_MESSAGES.'
+        JOIN '.NEW_TABLE_MESSAGE_TYPES.' 
+			ON '.NEW_TABLE_MESSAGES.'.message_type_id = '.NEW_TABLE_MESSAGE_TYPES.'.message_type_id 
+            AND '.NEW_TABLE_MESSAGE_TYPES.'.description = "ledger comment"
+        WHERE IFNULL('.NEW_TABLE_MESSAGES.'.referenced_key1, 0) > 0
+        AND '.NEW_TABLE_MESSAGES.'.referenced_key1 = '.NEW_TABLE_LEDGER.'.transaction_id
+        LIMIT 1
+	) AS product_message,
+	(
+		SELECT '.NEW_TABLE_MESSAGES.'.message
+		FROM '.NEW_TABLE_MESSAGES.'
+        JOIN '.NEW_TABLE_MESSAGE_TYPES.' 
+			ON '.NEW_TABLE_MESSAGES.'.message_type_id = '.NEW_TABLE_MESSAGE_TYPES.'.message_type_id 
+            AND '.NEW_TABLE_MESSAGE_TYPES.'.description = "adjustment group memo"
+        WHERE IFNULL('.NEW_TABLE_MESSAGES.'.referenced_key1, 0) > 0
+        AND '.NEW_TABLE_MESSAGES.'.referenced_key1 = '.NEW_TABLE_LEDGER.'.transaction_group_id
+        LIMIT 1
+	) AS adjustment_group_memo
   FROM
     '.NEW_TABLE_LEDGER.'
   LEFT JOIN '.NEW_TABLE_PRODUCTS.' USING(pvid)
@@ -176,21 +203,6 @@ $query_product = '
   LEFT JOIN '.TABLE_PRODUCT_TYPES.' USING(production_type_id)
   LEFT JOIN '.TABLE_PRODUCT_STORAGE_TYPES.' USING(storage_id)
   LEFT JOIN '.TABLE_ORDER_CYCLES.' USING(delivery_id)
-  LEFT JOIN '.NEW_TABLE_MESSAGES.' '.NEW_TABLE_MESSAGES.'1 ON
-    ( '.NEW_TABLE_MESSAGES.'1.referenced_key1 = '.NEW_TABLE_BASKET_ITEMS.'.bpid
-    AND '.NEW_TABLE_MESSAGES.'1.message_type_id =
-      (SELECT message_type_id FROM '.NEW_TABLE_MESSAGE_TYPES.' WHERE description = "customer notes to producer")
-    )
-  LEFT JOIN '.NEW_TABLE_MESSAGES.' '.NEW_TABLE_MESSAGES.'2 ON
-    ( '.NEW_TABLE_MESSAGES.'2.referenced_key1 = '.NEW_TABLE_LEDGER.'.transaction_id
-    AND '.NEW_TABLE_MESSAGES.'2.message_type_id =
-      (SELECT message_type_id FROM '.NEW_TABLE_MESSAGE_TYPES.' WHERE description = "ledger comment")
-    )
-  LEFT JOIN '.NEW_TABLE_MESSAGES.' '.NEW_TABLE_MESSAGES.'3 ON
-    ( '.NEW_TABLE_MESSAGES.'3.referenced_key1 = '.NEW_TABLE_LEDGER.'.transaction_group_id
-    AND '.NEW_TABLE_MESSAGES.'3.message_type_id =
-      (SELECT message_type_id FROM '.NEW_TABLE_MESSAGE_TYPES.' WHERE description = "adjustment group memo")
-    )
   WHERE
     '.NEW_TABLE_LEDGER.'.basket_id = (SELECT basket_id FROM '.NEW_TABLE_BASKETS.' WHERE member_id="'.mysql_real_escape_string($member_id).'" AND delivery_id="'.mysql_real_escape_string($delivery_id).'")
     AND ( '.NEW_TABLE_LEDGER.'.replaced_by IS NULL'.

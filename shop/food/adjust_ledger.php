@@ -10,15 +10,7 @@ if (isset ($_REQUEST['method'])) $method = $_REQUEST['method'];
 
 if ($type == 'reserve_transaction_group_id')
   {
-    // Reserve a group adjustment value using the transaction_group_enum table (similar to an auto-increment)
-    $query = '
-      INSERT INTO
-        '.NEW_TABLE_ADJUSTMENT_GROUP_ENUM.'
-      VALUES (NULL)';
-    $result = mysql_query($query, $connection) or die(debug_print ("ERROR: 752930 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
-    $inserted_row = mysql_insert_id();
-    // Return the row to the ajax query
-    echo $inserted_row;
+    echo reserve_transaction_group_id();
   }
 
 if ($type == 'single')
@@ -224,9 +216,15 @@ if ($type == 'update')
     $new_site_id = $_REQUEST['site_id'];
     $new_delivery_id = $_REQUEST['delivery_id'];
     $new_pvid = $_REQUEST['pvid'];
-    $new_transaction_group_id = $_REQUEST['transaction_group_id'];
     $new_adjustment_message = $_REQUEST['adjustment_message'];
     $zero_split = $_REQUEST['zero_split'];
+
+    $new_transaction_group_id = $_REQUEST['transaction_group_id'];
+    if (!$new_transaction_group_id) 
+    {
+        $new_transaction_group_id = reserve_transaction_group_id();
+    }
+
     if (strlen ($new_adjustment_message) > 0)
       {
         // Do not use the regular transaction messaging process that goes with add_to_ledger
@@ -252,7 +250,6 @@ if ($type == 'update')
     // Updating (splitting) the remaining one.
     if ($zero_split == 'true')
       {
-// debug_print ("WARN: X-2-X ZERO SPLIT:", $zero_split, basename(__FILE__).' LINE '.__LINE__);
         $payment_transaction_id = add_to_ledger (array (
           'transaction_group_id' => $new_transaction_group_id,
           'source_type' => $original_transaction_data['source_type'],
@@ -276,7 +273,6 @@ if ($type == 'update')
       }
 
     // Update the ledger using the basket method (automatically adds new item and links with prior)
-// debug_print ("WARN: X-3-X ", $_REQUEST, basename(__FILE__).' LINE '.__LINE__);
     $ledger_status = basket_item_to_ledger(array (
       'transaction_id' => $original_transaction_id,
       'transaction_group_id' => $original_transaction_data['transaction_group_id'],
@@ -698,3 +694,17 @@ function display_page_footer ()
   </body>
 </html>';
   }
+
+// MZ: For Aiveo issue #11
+// Somehow we ended up with entries in kvfc_messages with empty referenced_key1 value where we should have a transaction group ID
+// Factoring this code into a method so it can be used in a couple of places to ensure we have a value.
+function reserve_transaction_group_id () {
+    // Reserve a group adjustment value using the transaction_group_enum table (similar to an auto-increment)
+    global $connection;
+    $query = '
+      INSERT INTO
+        '.NEW_TABLE_ADJUSTMENT_GROUP_ENUM.'
+      VALUES (NULL)';
+    $result = mysql_query($query, $connection) or die(debug_print ("ERROR: 752930 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
+    return mysql_insert_id();
+}
