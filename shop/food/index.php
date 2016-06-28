@@ -26,6 +26,10 @@ include_once ('func.check_membership.php');
 //     [provide order cycle information]
 //   }
 
+$login_button = '<button class="loginButton" onclick="location.href = \''.PATH.'index.php?action=login\';">login</button>';
+
+$page_tab = '';
+
 // If being asked to logout, then do that first
 if ($_REQUEST['action'] == 'logout')
   {
@@ -40,10 +44,10 @@ if ($_REQUEST['action'] == 'logout')
     $page_title_html = '<span class="title">'.SITE_NAME.'</span>';
     $page_subtitle_html = '<span class="subtitle">Logout</span>';
     $page_title = 'Logout';
-    $page_tab = 'login';
+    $content = $login_button;
   }
 // Check if the member is not already logged in
-if ($_REQUEST['action'] == 'login' && ! $_SESSION['member_id'])
+elseif  ($_REQUEST['action'] == 'login' && ! $_SESSION['member_id'])
   {
     // Check if we already have a posted username/password combination
     if ($_POST['username'] && $_POST['password'])
@@ -152,7 +156,7 @@ if ($_REQUEST['action'] == 'login' && ! $_SESSION['member_id'])
         $form_block .= '
           <form class="login" method="post" action="'.$_SERVER['SCRIPT_NAME'].'?action=login" name="login">
             <fieldset>
-              <button type="submit" name="submit" tabindex="3">go</button>
+              <button type="submit" name="submit" tabindex="3" class="loginButton rightFloat">go</button>
               <label>Username</label>
               <input id="load_target" type="text" name="username" placeholder="Username" tabindex="1">
               <label>Password</label>
@@ -175,27 +179,25 @@ if ($_REQUEST['action'] == 'login' && ! $_SESSION['member_id'])
     $page_title_html = '<span class="title">'.SITE_NAME.'</span>';
     $page_subtitle_html = '<span class="subtitle">Login</span>';
     $page_title = 'Login';
-    $page_tab = 'login';
   }
 else
   {
-    // Not login and not logged in, so show basic "info" screen
+    // Not logging in and not logged in, so show basic "info" screen
     $content .= 
       ($error_message ? '<div class="error_message">'.$error_message.'</div>' : '').'
       <div id="info_container" style="background-image: url('.DIR_GRAPHICS.'info_background.png); background-repeat: no-repeat; width:100%;background-position:top right;min-height:401px;background-size:870px 410px;">
-        <h3 style="clear; padding-top:220px;">Information Links</h3>
+        '.$login_button.'
+        <h3 style="clear;">Information Links</h3>
         <ul class="info_links">
-          <li><a href="'.PATH.'locations.php">Food Pickup/Delivery Locations</a></li>
-          <li><a href="'.PATH.'prdcr_list.php">Active Producers</a></li>
           <li><a href="'.PATH.'contact.php">Contacts</a></li>
           <li><a href="'.PATH.'product_list.php?type=full">Current Product Listings</a></li>
+          <li><a href="'.PATH.'prdcr_list.php">Active Producers</a></li>
           <li><a href="'.PATH.'member_form.php">Membership Application Form</a></li>
-          <li><a href="'.PATH.'index.php?action=login">Login to Order</a></li>
+          <li><a href="'.PATH.'locations.php">Food Pickup Location</a></li>
         </ul>
       </div>
       <div style="clear:both;"></div>';
     $page_title_html = '<span class="title">'.SITE_NAME.'</span>';
-    $page_subtitle_html = '<span class="subtitle">Information</span>';
     $page_title = 'Information';
     $page_tab = 'login';
   }
@@ -256,10 +258,9 @@ input {
   font-size:20px;
   border:1px solid #87753e;
   }
-button {
+.loginButton {
   display:block;
-  float:right;
-  color:#b7a777;
+  color:#e0b479;
   font-weight:bold;
   font-size:40px;
   width:130px;
@@ -270,16 +271,19 @@ button {
   background-color:#97a97b;
   outline:0;
   }
-button:focus,
-button::-moz-focus-inner {  
+.loginButton:focus,
+.loginButton::-moz-focus-inner {  
   border:0;
   color:#f1e021;
   }
-button:hover {
+.loginButton:hover {
   color:#f1e021;
   border:1px solid #87753e;
   background-color:#758954;
   }
+.rightFloat {
+    float: right;
+}
 fieldset a {
   display:block;
   clear:both;
@@ -296,11 +300,6 @@ input.search-field {
   }
 
 </style>';
-
-//// $page_title_html = '<span class="title">'.SITE_NAME.'</span>';
-//// $page_subtitle_html = '<span class="subtitle">Login</span>';
-//// $page_title = 'Login';
-//// $page_tab = 'login';
 
 include("template_header.php");
 echo '

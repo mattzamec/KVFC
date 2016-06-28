@@ -700,28 +700,6 @@ li.last_of_group {
   font-family: "Source Sans Pro",Helvetica,sans-serif;
   }
 
-/***** FOLLOWING STYLES ARE FROM ORIGINAL /shop/members/header ******/
-
-/*
-body, p, td {
-  font-family: 'Open Sans', Verdana;
-  font-size: 9pt;
-  color: #000000;
-  }
-
-body {
-  margin-left:0;
-  margin-top:0;
-  background:#F5EDD6;
-  }
-*/
-
-/*
-h1 {
-  text-align:center;
-  }
-*/
-
 em {
   font-style:italic;
   color: #758954;
@@ -875,7 +853,7 @@ form input.error {
   background-color:#ddd;
   padding:3px;
   text-align:center;
-  overlfow:auto;
+  overflow:auto;
   cursor:pointer;
   }
 
