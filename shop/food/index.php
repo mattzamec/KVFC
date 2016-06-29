@@ -28,8 +28,6 @@ include_once ('func.check_membership.php');
 
 $login_button = '<button class="loginButton" onclick="location.href = \''.PATH.'index.php?action=login\';">login</button>';
 
-$page_tab = '';
-
 // If being asked to logout, then do that first
 if ($_REQUEST['action'] == 'logout')
   {
@@ -44,6 +42,7 @@ if ($_REQUEST['action'] == 'logout')
     $page_title_html = '<span class="title">'.SITE_NAME.'</span>';
     $page_subtitle_html = '<span class="subtitle">Logout</span>';
     $page_title = 'Logout';
+    $page_tab = 'nologin';
     $content = $login_button;
   }
 // Check if the member is not already logged in
@@ -179,6 +178,7 @@ elseif  ($_REQUEST['action'] == 'login' && ! $_SESSION['member_id'])
     $page_title_html = '<span class="title">'.SITE_NAME.'</span>';
     $page_subtitle_html = '<span class="subtitle">Login</span>';
     $page_title = 'Login';
+    $page_tab = 'nologin';
   }
 else
   {

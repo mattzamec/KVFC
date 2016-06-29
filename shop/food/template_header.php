@@ -159,7 +159,7 @@ if ($_SESSION['member_id'])
       }
   }
 // If they're not logged in, then they will have a login link
-elseif ($page_tab == 'login')
+elseif ($page_tab != 'nologin')
   {
     $login_menu = '
         <div class="tab_frame right">
