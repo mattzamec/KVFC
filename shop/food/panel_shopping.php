@@ -174,12 +174,10 @@ if ($_GET['action'] == 'delivery_list_only' && $delivery_codes_list)
         }
       #delivery_dropdown:hover {
         width:100%;
+        height:auto;
         }
       #delivery_select {
         width:100%;
-        height:auto;
-        }
-      #delivery_dropdown:hover {
         height:auto;
         }
       </style>';

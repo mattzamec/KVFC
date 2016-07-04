@@ -19,7 +19,7 @@
   height:400px;
   }
 h1.basket_history {
-  width:300px;
+  width:100%;
   font-size:16px;
   color:#efe;
   background-color:#050;
@@ -28,6 +28,7 @@ h1.basket_history {
   margin:0;
   padding:3px;
   line-height:1;
+  text-align: center;
   }
 #basket_history {
   width:100%;
