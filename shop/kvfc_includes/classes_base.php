@@ -1,354 +1,327 @@
 <?php
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
-///                                                                                           ///
-///         Classes to set common "global" values (previously contained in the session)       ///
-///                                                                                           ///
-/////////////////////////////////////////////////////////////////////////////////////////////////
+// Base class for more specific order types (Active, Bulk and so on) 
+abstract class OrderCycle
+{
+    // Order cycle properties
+    protected $delivery_id = false;
+    protected $delivery_date = false;
+    protected $date_open = false;
+    protected $date_closed = false;
+    protected $order_fill_deadline = false;
+    protected $msg_all = false;
+    protected $msg_bottom = false;
+    protected $coopfee = false;
+    protected $invoice_price = false;
+    protected $producer_markdown = false;
+    protected $retail_markup = false;
+    protected $wholesale_markup = false;
+    protected $is_open_for_ordering = false;
+    protected $is_open_for_fulfillment = false;
 
-// ActiveCycle returns informatoin for the delivery that began most recently in the past,
-// regardless of when it ends or ended.
-class ActiveCycle
-  {
-    private static $active_cycle_query_complete = false;
-    private static $next_query_complete = false;
+    // Constructor will run the query for the appropriate $prm_where_clause and $prm_order_by supplied
+    // and assign properties
+    protected function __construct($prm_where_clause, $prm_order_by = 'date_open DESC') 
+    {
+        global $connection;
 
-    private static $delivery_id = false;
-    private static $delivery_date = false;
-    private static $date_open = false;
-    private static $date_closed = false;
-    private static $order_fill_deadline = false;
-    private static $producer_markdown = false;
-    private static $retail_markup = false;
-    private static $wholesale_markup = false;
-    private static $date_open_next = false;
-    private static $date_closed_next = false;
-    private static $delivery_date_next = false;
-    private static $delivery_id_next = false;
-    private static $producer_markdown_next = false;
-    private static $retail_markup_next = false;
-    private static $wholesale_markup_next = false;
-    private static $ordering_window = false;
-    private static $producer_update_window = false;
-    private static $using_next = false;
-    private static function get_delivery_info ($target_delivery_id)
-      {
-        if (self::$active_cycle_query_complete === false ||
-            self::$delivery_id != $target_delivery_id)
-          {
-            global $connection;
-            // Set up for pulling only order cycles appropriate to the current customer_type permissions
-            // Allow "orderex" direct access to all order cycles
-            $customer_type_query = (CurrentMember::auth_type('orderex') ? '1' : '0');
-            if (CurrentMember::auth_type('member')) $customer_type_query .= '
-              OR customer_type LIKE "%member%"';
-            if (CurrentMember::auth_type('institution')) $customer_type_query .= '
-              OR customer_type LIKE "%institution%"';
-            if ($target_delivery_id == '')   // Use the default (current) delivery_id
-              {
-                $query_where = '
-                date_open < "'.date ('Y-m-d H:i:s', time()).'"
-                AND ('.$customer_type_query.')';
-              }
-            else // Use a specific delivery_id
-              {
-                $query_where = '
-                delivery_id = "'.mysql_real_escape_string ($target_delivery_id).'"';
-              }
-            // Get information about any shopping period that is currently open
-            $query = '
-              SELECT
-                delivery_id,
-                delivery_date,
-                date_open,
-                date_closed,
-                order_fill_deadline,
-                producer_markdown / 100 AS producer_markdown,
-                retail_markup / 100 AS retail_markup,
-                wholesale_markup / 100 AS wholesale_markup
-              FROM
-                '.TABLE_ORDER_CYCLES.'
-              WHERE'.
-                $query_where.'
-                /* AND order_fill_deadline > "'.date ('Y-m-d H:i:s', time()).'" */
-              ORDER BY
-                delivery_id DESC
-              LIMIT
-                1';
-            $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 730099 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
-            // Set default values in case we returned nothing
-            self::$delivery_id = 1;
-            if ($row = mysql_fetch_object ($result))
-              {
-                self::$delivery_id = $row->delivery_id;
-                self::$delivery_date = $row->delivery_date;
-                self::$date_open = $row->date_open;
-                self::$date_closed = $row->date_closed;
-                self::$order_fill_deadline = $row->order_fill_deadline;
-                self::$producer_markdown = $row->producer_markdown;
-                self::$retail_markup = $row->retail_markup;
-                self::$wholesale_markup = $row->wholesale_markup;
-                if (time() > strtotime ($row->date_open) && time() < strtotime ($row->date_closed))
-                  self::$ordering_window = 'open';
-                else
-                  self::$ordering_window = 'closed';
-                if (time() > strtotime ($row->date_closed) && time() < strtotime ($row->order_fill_deadline))
-                  self::$producer_update_window = 'open';
-                else
-                  self::$producer_update_window = 'closed';
-                self::$active_cycle_query_complete = true;
-              }
-            elseif ($target_delivery_id != 0)
-              {
-                self::$delivery_id = $target_delivery_id;
-                self::$delivery_date = '';
-                self::$date_open = '';
-                self::$date_closed = '';
-                self::$order_fill_deadline = '';
-                self::$producer_markdown = 0;
-                self::$retail_markup = 0;
-                self::$wholesale_markup = 0;
-                self::$active_cycle_query_complete = true;
-              }
-          }
-      }
-    private static function get_next_delivery_info ()
-      {
-        if (self::$next_query_complete === false)
-          {
-            global $connection;
-            // Set up for pulling only order cycles appropriate to the current customer_type permissions
-            // Allow "orderex" direct access to all order cycles
-            $customer_type_query = (CurrentMember::auth_type('orderex') ? '1' : '0');
-            if (CurrentMember::auth_type('member')) $customer_type_query .= '
-              OR customer_type LIKE "%member%"';
-            if (CurrentMember::auth_type('institution')) $customer_type_query .= '
-              OR customer_type LIKE "%institution%"';
-            // Set the default "where condition" to be the cycle that opened most recently
-            // Do not use MySQL NOW() because it does not know about the php timezone directive
-            $now = date ('Y-m-d H:i:s', time());
-            $query = '
-                (SELECT
-                  date_open,
-                  date_closed,
-                  delivery_date,
-                  delivery_id,
-                  producer_markdown / 100 AS producer_markdown,
-                  retail_markup / 100 AS retail_markup,
-                  wholesale_markup / 100 AS wholesale_markup,
-                  1 AS using_next
-                FROM
-                  '.TABLE_ORDER_CYCLES.'
-                WHERE
-                  date_closed > "'.$now.'"
-                  AND ('.$customer_type_query.')
-                ORDER BY
-                  date_closed ASC
-                LIMIT 0,1)
-              UNION
-                (SELECT
-                  date_open,
-                  date_closed,
-                  delivery_date,
-                  delivery_id,
-                  producer_markdown / 100 AS producer_markdown,
-                  retail_markup / 100 AS retail_markup,
-                  wholesale_markup / 100 AS wholesale_markup,
-                  0 AS using_next
-                FROM
-                  '.TABLE_ORDER_CYCLES.'
-                WHERE
-                  date_open < "'.$now.'"
-                  AND ('.$customer_type_query.')
-                ORDER BY
-                  date_open DESC
-                LIMIT 0,1)';
-            $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 863024 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
-            if ($row = mysql_fetch_object ($result))
-              {
-                self::$date_open_next = $row->date_open;
-                self::$date_closed_next = $row->date_closed;
-                self::$delivery_date_next = $row->delivery_date;
-                self::$delivery_id_next = $row->delivery_id;
-                self::$producer_markdown_next = $row->producer_markdown;
-                self::$retail_markup_next = $row->retail_markup;
-                self::$wholesale_markup_next = $row->wholesale_markup;
-                self::$using_next = $row->using_next;
-                self::$next_query_complete = true;
-              }
-          }
-      }
-    // Use this function if it is necessary to change/set the active delivery_id within a script.
-    public function set_active_delivery_id ($new_delivery_id = '')
-      {
-        $active_cycle_query_complete = false;
-        self::get_delivery_info ($target_delivery_id);
-        return self::$delivery_id;
-      }
-    // Following functions return information for the (current or set value) delivery_id
-    public static function delivery_id ($target_delivery_id = '')
-      {
-        self::get_delivery_info ($target_delivery_id);
-        return self::$delivery_id;
-      }
-    public static function delivery_date ($target_delivery_id = '')
-      {
-        self::get_delivery_info ($target_delivery_id);
-        return self::$delivery_date;
-      }
-    public static function date_open ($target_delivery_id = '')
-      {
-        self::get_delivery_info ($target_delivery_id);
-        return self::$date_open;
-      }
-    public static function date_closed ($target_delivery_id = '')
-      {
-        self::get_delivery_info ($target_delivery_id);
-        return self::$date_closed;
-      }
-    public static function order_fill_deadline ($target_delivery_id = '')
-      {
-        self::get_delivery_info ($target_delivery_id);
-        return self::$order_fill_deadline;
-      }
-    public static function producer_markdown ($target_delivery_id = '')
-      {
-        self::get_delivery_info ($target_delivery_id);
-        return self::$producer_markdown;
-      }
-    public static function retail_markup ($target_delivery_id = '')
-      {
-        self::get_delivery_info ($target_delivery_id);
-        return self::$retail_markup;
-      }
-    public static function ordering_window ($target_delivery_id = '')
-      {
-        self::get_delivery_info ($target_delivery_id);
-        return self::$ordering_window;
-      }
-    public static function producer_update_window ($target_delivery_id = '')
-      {
-        self::get_delivery_info ($target_delivery_id);
-        return self::$producer_update_window;
-      }
-    public static function wholesale_markup ($target_delivery_id = '')
-      {
-        self::get_delivery_info ($target_delivery_id);
-        return self::$wholesale_markup;
-      }
-    // NextDelivery returns delivery information for either the next delivery that
-    // will close (in the future) or -- if that does not exist -- then the most recent
-    // delivery that opened (in the past) just as with the ActiveCycle class.
-    //
-    // So, NextDelivery is the same as ActiveCycle EXCEPT if a delivery cycle has
-    // already closed and the next one exists in the database, then the next one will
-    // be used instead.
-    public static function date_open_next ()
-      {
-        self::get_next_delivery_info (0);
-        return self::$date_open_next;
-      }
-    public static function date_closed_next ()
-      {
-        self::get_next_delivery_info (0);
-        return self::$date_closed_next;
-      }
-    public static function delivery_date_next ()
-      {
-        self::get_next_delivery_info (0);
-        return self::$delivery_date_next;
-      }
-    public static function delivery_id_next ()
-      {
-        self::get_next_delivery_info (0);
-        return self::$delivery_id_next;
-      }
-    public static function producer_markdown_next ()
-      {
-        self::get_next_delivery_info (0);
-        return self::$producer_markdown_next;
-      }
-    public static function retail_markup_next ()
-      {
-        self::get_next_delivery_info (0);
-        return self::$retail_markup_next;
-      }
-    public static function wholesale_markup_next ()
-      {
-        self::get_next_delivery_info (0);
-        return self::$wholesale_markup_next;
-      }
-    public static function using_next ()
-      {
-        self::get_next_delivery_info (0);
-        return self::$using_next;
-      }
-  }
+        // No need to worry about institution orders for the time being since KVFC does not do wholesale to institutions.
+        //$customer_type_query = (CurrentMember::auth_type('orderex') ? '1' : '0');
+        //if (CurrentMember::auth_type('member')) $customer_type_query .= '
+        //    OR customer_type LIKE "%member%"';
+        //if (CurrentMember::auth_type('institution')) $customer_type_query .= '
+        //    OR customer_type LIKE "%institution%"';
 
-class CurrentBasket
-  {
-    private static $query_complete = false;
-    private static $basket_id = false;
-    private static $basket_checked_out = false;
-    private static $site_id = false;
-    private static $site_short = false;
-    private static $site_long = false;
-    private static function get_basket_info ()
-      {
-        if (self::$query_complete === false)
-          {
-            global $connection;
-            $query = '
-              SELECT
-                '.NEW_TABLE_BASKETS.'.basket_id,
-                '.NEW_TABLE_SITES.'.site_id,
-                '.NEW_TABLE_SITES.'.site_short,
-                '.NEW_TABLE_SITES.'.site_long,
-                '.NEW_TABLE_BASKETS.'.checked_out
-              FROM
-                '.NEW_TABLE_BASKETS.'
-              LEFT JOIN '.NEW_TABLE_SITES.' USING(site_id)
-              WHERE
-                '.NEW_TABLE_BASKETS.'.delivery_id = "'.mysql_real_escape_string (ActiveCycle::delivery_id ()).'"
-                AND '.NEW_TABLE_BASKETS.'.member_id = "'.mysql_real_escape_string ($_SESSION['member_id']).'"';
-            $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 783032 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
-            if ($row = mysql_fetch_object ($result))
-              {
-                self::$basket_id = $row->basket_id;
-                self::$site_id = $row->site_id;
-                self::$site_short = $row->site_short;
-                self::$site_long = $row->site_long;
-                self::$basket_checked_out = $row->checked_out;
-                self::$query_complete = true;
-              }
-          }
-      }
-    public static function basket_id ()
-      {
-        self::get_basket_info ();
-        return self::$basket_id;
-      }
-    public static function site_id ()
-      {
-        self::get_basket_info ();
-        return self::$site_id;
-      }
-    public static function site_short ()
-      {
-        self::get_basket_info ();
-        return self::$site_short;
-      }
-    public static function site_long ()
-      {
-        self::get_basket_info ();
-        return self::$site_long;
-      }
-    public static function basket_checked_out ()
-      {
-        self::get_basket_info ();
-        return self::$basket_checked_out;
-      }
-  }
+        // Run the query
+        debug_print('INFO: RUNNING QUERY in OrderCycle constructor for WHERE clause '.$prm_where_clause.'; class is '.get_class($this));
+
+        $query = '
+        SELECT *
+        FROM '.TABLE_ORDER_CYCLES.'
+        WHERE '.$prm_where_clause.'
+        ORDER BY '.$prm_order_by.'
+        LIMIT 1';
+        $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 730099 ", array ($query, mysql_error()), basename(__FILE__).' LINE '.__LINE__));
+
+        if ($row = mysql_fetch_object ($result))
+        {
+            $this->delivery_id = $row->delivery_id;
+            $this->delivery_date = $row->delivery_date;
+            $this->date_open = $row->date_open;
+            $this->date_closed = $row->date_closed;
+            $this->order_fill_deadline = $row->order_fill_deadline;
+            $this->msg_all = $row->msg_all;
+            $this->msg_bottom = $row->msg_bottom;
+            $this->coopfee = $row->coopfee;
+            $this->invoice_price = $row->invoice_price;
+            $this->producer_markdown = $row->producer_markdown / 100;
+            $this->retail_markup = $row->retail_markup / 100;
+            $this->wholesale_markup = $row->wholesale_markup / 100;
+            $this->is_open_for_ordering = (time() > strtotime ($row->date_open) && time() < strtotime ($row->date_closed));
+            $this->is_open_for_fulfillment = (time() > strtotime ($row->date_closed) && time() < strtotime ($row->order_fill_deadline));
+        }
+        else
+        {    // Set defaults in case nothing was retrieved
+            $this->delivery_id = -1;
+            $this->delivery_date = 
+                $this->date_open = 
+                $this->date_closed = 
+                $this->order_fill_deadline = 
+                $this->msg_all = 
+                $this->msg_bottom = '';
+            $this->coopfee = 
+                $this->invoice_price = 
+                $this->producer_markdown = 
+                $this->retail_markup = 
+                $this->wholesale_markup = 0;
+            $this->is_open_for_ordering =  $this->is_open_for_fulfillment = false;
+        }
+    }
+
+    // Following functions act as read-only public properties for the cycle.
+    public function delivery_id()
+    {
+        return $this->delivery_id;
+    }
+    public function delivery_date()
+    {
+        return $this->delivery_date;
+    }
+    public function date_open()
+    {
+        return $this->date_open;
+    }
+    public function date_closed()
+    {
+        return $this->date_closed;
+    }
+    public function order_fill_deadline()
+    {
+        return $this->order_fill_deadline;
+    }
+    public function msg_all()
+    {
+        return $this->msg_all;
+    }
+    public function msg_bottom()
+    {
+        return $this->msg_bottom;
+    }
+    public function coopfee()
+    {
+        return $this->coopfee;
+    }
+    public function invoice_price()
+    {
+        return $this->invoice_price;
+    }
+    public function producer_markdown()
+    {
+        return $this->producer_markdown;
+    }
+    public function retail_markup()
+    {
+        return $this->retail_markup;
+    }
+    public function wholesale_markup()
+    {
+        return $this->wholesale_markup;
+    }
+    public function is_open_for_ordering()
+    {
+        return $this->is_open_for_ordering;
+    }
+    public function is_open_for_fulfillment()
+    {
+        return $this->is_open_for_fulfillment;
+    }
+}
+
+// The "active" cycle is one most recently opened prior to today, regardless of closing date.
+class ActiveCycle extends OrderCycle
+{
+    public function __construct() 
+    {
+        parent::__construct('is_bulk = 0
+        AND date_open < "'.date ('Y-m-d H:i:s', time()).'"');
+    }
+}
+
+// The "next" cycle is one with the closing date in the nearest future, if it exists; otherwise it is the same as "active" cycle.
+//   In general, "next" cycle will be the same as "active" cycle, unless the "active" cycle is already closed and there is another cycle in the database
+//   with a future closing date.
+class NextCycle extends OrderCycle
+{
+    public function __construct() 
+    {
+        // First try to get a cycle with a closing date in the future
+        parent::__construct('is_bulk = 0
+        AND date_closed > "'.date ('Y-m-d H:i:s', time()).'"', 'date_closed ASC');
+
+        // If there isn't one, we use the active cycle
+        if ($this->delivery_id == -1) 
+        {
+            parent::__construct('is_bulk = 0
+            AND date_open < "'.date ('Y-m-d H:i:s', time()).'"');
+        }
+    }
+}
+
+// The "new" cycle is used to default values when opening a new cycle. It will be the cycle with the latest opening date in the database, 
+//   with all dates incremented by DAYS_PER_CYCLE from the configuration table.
+class NewCycle extends OrderCycle
+{
+    public function __construct() 
+    {
+        parent::__construct('is_bulk = 0');
+        
+        if ($this->delivery_id != -1)   // Increment the dates found in the database
+        {
+            $this->delivery_date = date('Y-m-d', strtotime($this->delivery_date . '+' . DAYS_PER_CYCLE . ' days'));
+            $this->date_open = date('Y-m-d H:i:s', strtotime($this->date_open . '+' . DAYS_PER_CYCLE . ' days'));
+            $this->date_closed = date('Y-m-d H:i:s', strtotime($this->date_closed . '+' . DAYS_PER_CYCLE . ' days'));
+            $this->order_fill_deadline = date('Y-m-d H:i:s', strtotime($this->order_fill_deadline . '+' . DAYS_PER_CYCLE . ' days'));
+        }
+        else  // Default dates; note that this would only happen for the very first order cycle so it's practically redundant
+        {
+            $this->delivery_date = date('Y-m-d', strtotime(date("Y-m-d") . '+' . DAYS_PER_CYCLE . ' days'));
+            $this->date_open = date("Y-m-d H:i:s");
+            $this->date_closed = date("Y-m-d H:i:s", strtotime(date("Y-m-d H:i:s") . '+' . DAYS_PER_CYCLE . ' days'));
+            $this->order_fill_deadline = date("Y-m-d H:i:s", strtotime(date("Y-m-d H:i:s") . '+' . DAYS_PER_CYCLE . ' days'));
+            $this->msg_all = '';
+            $this->msg_bottom = 'Thanks for supporting your local producers!';
+        }
+    }
+}
+
+// The Bulk Cycles mirror the active, next and new queries for regular cycles but include only bulk orders.
+class ActiveBulkCycle extends OrderCycle
+{
+    public function __construct() 
+    {
+        parent::__construct('is_bulk = 1
+        AND date_open < "'.date ('Y-m-d H:i:s', time()).'"');
+    }
+}
+class NextBulkCycle extends OrderCycle
+{
+    public function __construct() 
+    {
+        // First try to get a cycle with a closing date in the future
+        parent::__construct('is_bulk = 1
+        AND date_closed > "'.date ('Y-m-d H:i:s', time()).'"', 'date_closed ASC');
+
+        // If there isn't one, we use the active cycle
+        if ($this->delivery_id == -1) 
+        {
+            parent::__construct('is_bulk = 1
+            AND date_open < "'.date ('Y-m-d H:i:s', time()).'"');
+        }
+    }
+}
+class NewBulkCycle extends OrderCycle
+{
+    public function __construct() 
+    {
+        parent::__construct('is_bulk = 1');
+        
+        if ($this->delivery_id != -1)   // Increment the dates found in the database
+        {
+            $this->delivery_date = date('Y-m-d', strtotime($this->delivery_date . '+' . DAYS_PER_CYCLE . ' days'));
+            $this->date_open = date('Y-m-d H:i:s', strtotime($this->date_open . '+' . DAYS_PER_CYCLE . ' days'));
+            $this->date_closed = date('Y-m-d H:i:s', strtotime($this->date_closed . '+' . DAYS_PER_CYCLE . ' days'));
+            $this->order_fill_deadline = date('Y-m-d H:i:s', strtotime($this->order_fill_deadline . '+' . DAYS_PER_CYCLE . ' days'));
+        }
+        else  // Default dates; note that this would only happen for the very first order cycle so it's practically redundant
+        {
+            $this->delivery_date = date('Y-m-d', strtotime(date("Y-m-d") . '+' . DAYS_PER_CYCLE . ' days'));
+            $this->date_open = date("Y-m-d H:i:s");
+            $this->date_closed = date("Y-m-d H:i:s", strtotime(date("Y-m-d H:i:s") . '+' . DAYS_PER_CYCLE . ' days'));
+            $this->order_fill_deadline = date("Y-m-d H:i:s", strtotime(date("Y-m-d H:i:s") . '+' . DAYS_PER_CYCLE . ' days'));
+            $this->msg_all = '';
+            $this->msg_bottom = 'Thanks for supporting your local producers!';
+        }
+    }
+}
+
+// A specific cycle must specify an ID
+class SpecificCycle extends OrderCycle
+{
+    public function __construct($prm_id) 
+    {
+        // Just to be safe, let's make sure the ID is numeric
+        if (!is_numeric($prm_id)) 
+        {
+            $prm_id = '-1';
+        }
+        parent::__construct("delivery_id = $prm_id");
+    }
+}
+
+// Base class for more specific basket types (Current, Bulk) 
+abstract class Basket
+{
+    // Basket properties
+    protected $basket_id = false;
+    protected $site_id = false;
+
+    // Constructor will run the appropriate query and assign properties
+    protected function __construct($prm_is_bulk = false) 
+    {
+        global $connection;
+
+        // Run the query
+        debug_print('INFO: RUNNING QUERY in Basket constructor; class is '.get_class($this));
+
+        $query = '
+          SELECT
+            '.NEW_TABLE_BASKETS.'.basket_id,
+            '.NEW_TABLE_SITES.'.site_id
+          FROM '.NEW_TABLE_BASKETS.'
+          LEFT JOIN '.NEW_TABLE_SITES.' USING(site_id)
+          WHERE '.NEW_TABLE_BASKETS.'.delivery_id = "'.mysql_real_escape_string($prm_is_bulk ? (new ActiveBulkCycle())->delivery_id() : (new ActiveCycle())->delivery_id()).'"
+          AND '.NEW_TABLE_BASKETS.'.member_id = "'.mysql_real_escape_string ($_SESSION['member_id']).'"';
+        $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 783032 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
+        if ($row = mysql_fetch_object ($result))
+        {
+            $this->basket_id = $row->basket_id;
+            $this->site_id = $row->site_id;
+        }
+        else
+        {    // Set defaults in case nothing was retrieved
+            $this->basket_id = -1;
+            $this->site_id = -1;
+        }
+    }
+
+    // Following functions act as read-only public properties for the cycle.
+    public function basket_id()
+    {
+        return $this->basket_id;
+    }
+    public function site_id()
+    {
+        return $this->site_id;
+    }
+}
+
+// Current regular basket
+class CurrentBasket extends Basket 
+{
+    public function __construct() 
+    {
+        parent::__construct(false);
+    }
+}
+
+// Current bulk basket
+class CurrentBulkBasket extends Basket 
+{
+    public function __construct() 
+    {
+        parent::__construct(true);
+    }
+}
 
 class CurrentMember
   {
@@ -409,11 +382,13 @@ class CurrentMember
     public static function auth_type ($test_auth)
       {
         self::get_member_info ();
-        foreach (explode (',', $test_auth) as $needle)
-          {
-            if (is_array (self::$auth_type) && in_array ($needle, self::$auth_type))
-              return true;
-          }
+        foreach (explode(',', $test_auth) as $needle)
+        {
+            if(is_array(self::$auth_type) && in_array($needle, self::$auth_type))
+            {
+                return true;
+            }
+        }
           return false;
       }
     public static function business_name ()

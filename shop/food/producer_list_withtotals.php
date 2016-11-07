@@ -12,7 +12,7 @@ $all_checked_out = 0;
 
 // Configure the delivery_id
 if (isset ($_GET['delivery_id'])) $delivery_id = $_GET['delivery_id'] / 1;
-else $delivery_id = ActiveCycle::delivery_id();
+else $delivery_id = (new ActiveCycle())->delivery_id();
 
 // Sanitize and get directive for sort direction
 $switch = '';

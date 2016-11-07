@@ -3,7 +3,7 @@ include_once 'config_openfood.php';
 session_start();
 // valid_auth('member');  // Do not authenticate so this page is accessible to everyone
 
-
+$active_cycle = new ActiveCycle();
 $content_faq = '
   <table width="80%">
     <tr>
@@ -32,46 +32,35 @@ $content_faq = '
           <br><br>
           <li> <a href="#q1">What if I have questions that are not covered in this list?</a>
         </ul>
-
         <div id="order1"></div>
         <br>
         <b>Q: How do I order online with this shopping cart?</b>
         <br>
-        <b>A:</b> The member log-in page is <a href="'.PATH.'">'.PATH.'</a>. If an order is open for shopping, you can open a basket by selecting a location from the &quot;Select Location&quot; function on the Shopping Panel. There are two methods of selecting products you want to buy.
+        <b>A:</b> The member log-in page is <a href="'.PATH.'">'.PATH.'</a>. If an order is open for shopping, you can open a basket by selecting a link on the <a href="'.PATH.'panel_shopping.php">Shopping Panel</a> page. You can place both regular weekly orders, and monthly Bulk Item orders for larger amounts of dry goods. The process for regular and bulk ordering is the same:
         <ol>
         <li>You can browse through the product lists and click "Add to Shopping Cart". When you do this, the system adds one of the items you have selected to your cart. You can adjust the quantity in your basket by pressing the +/- buttons near the basket icon. If you need to add notes to the producer, such as "red, medium sized tomatoes" or "make this a small pig", click on View Your Cart, place the cursor in the box for notes for that product, type in the notes, and then press the &quot;Update Message&quot; button to the right of the entry form. When you are done, there is no need to submit your order - whatever remains in your basket when the order closes will be considered your order. <br>
         <br>
-
         <li>To remove a product from your shopping cart, press the - (minus) button near the basket icon until the quantity is reduced to zero.<br>
         <br>
-
         <li>You can edit your order up until the time that the Order Desk closes at the end of Delivery Day. The time of closing is announced at the beginning of Order Week. To edit your order (add or subtract items, change quantities, add notes), log in at <a href="'.PATH.'">'.PATH.'</a> . There is no need to submit your order - whatever remains in your basket when the order closes will be considered your order.
         </ol><br>
         <!-- Note: the shopping cart will show a subtotal, but it will not necessarily subtotal everything you have ordered, as items with random weights (such as packages of meat or cheese) will not be totaled until that information is updated from the producers. -->
-
-
         <div id="order2"></div>
         <br><br>
-
         <b>Q: How do I order NOT using this shopping cart?</b>
         <br>
         <b>A:</b> For ordering NOT using this online shopping cart,
         please email <a href="mailto:'.CUSTOMER_EMAIL.'">'.CUSTOMER_EMAIL.'</a> to ask if there is a &quot;computer buddy&quot; who can take your order by phone or fax.
-
         <div id="order3"></div>
         <br><br>
-
         <b>Q: Can I change my order?</b>
         <br>
-        <b>A:</b> You can log in and change your order until <strong>'.date ('g:i a, F j', strtotime (ActiveCycle::date_closed())).'</strong>. Between then and the delivery day, producers will be entering weights on any items that need it and putting your order together. You can view your temporary invoice in progress during that time by logging in.
-
+        <b>A:</b> You can log in and change your order until <strong>'.date ('g:i a, F j', strtotime ($active_cycle->date_closed())).'</strong>. Between then and the delivery day, producers will be entering weights on any items that need it and putting your order together. You can view your temporary invoice in progress during that time by logging in.
         <div id="order4"></div>
         <br><br>
-
         <b>Q: When does ordering end for this month?</b>
         <br>
-        <b>A:</b> You can log in and change your order until <strong>'.date ('g:i a, F j', strtotime (ActiveCycle::date_closed())).'</strong>.
-
+        <b>A:</b> You can log in and change your order until <strong>'.date ('g:i a, F j', strtotime ($active_cycle->date_closed())).'</strong>.
         <div id="order5"></div>
         <br><br>
 
@@ -102,7 +91,7 @@ $content_faq = '
 
         <b>Q: When can I pick up or have my items delivered?</b>
         <br>
-        <b>A:</b> Delivery Day is <strong>'.date ('F j', strtotime (ActiveCycle::delivery_date())).'</strong>. Your temporary invoice (viewable after ordering is closed) will have the information on pick up location or delivery. If you chose delivery, a route manager will be in touch to coordinate delivery with you.
+        <b>A:</b> Delivery Day is <strong>'.date ('F j', strtotime ($active_cycle->delivery_date())).'</strong>. Your temporary invoice (viewable after ordering is closed) will have the information on pick up location or delivery. If you chose delivery, a route manager will be in touch to coordinate delivery with you.
 
         <div id="del2"></div>
         <br><br>

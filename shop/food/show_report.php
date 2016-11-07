@@ -8,7 +8,7 @@ $pager = array();
 // Set up some variables that might be needed
 if (isset ($_SESSION['member_id'])) $member_id = $_SESSION['member_id'];
 if (isset ($_SESSION['producer_id_you'])) $producer_id_you = $_SESSION['producer_id_you'];
-$delivery_id = mysql_real_escape_string (ActiveCycle::delivery_id());
+$delivery_id = mysql_real_escape_string ((new ActiveCycle())->delivery_id());
 
 // Allow cashier to override member_id
 if (isset ($_GET['member_id']) && CurrentMember::auth_type('cashier'))

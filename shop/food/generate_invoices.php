@@ -4,23 +4,21 @@ session_start();
 valid_auth('cashier,site_admin,orderex');
 
 // Use any valid delivery_id that was passed or else use current value
-if (round ($_GET['delivery_id']) && $_GET['delivery_id'] <= ActiveCycle::delivery_id() && $_GET['delivery_id'] > 0)
+$active_cycle = new ActiveCycle();
+if (round ($_GET['delivery_id']) && $_GET['delivery_id'] <= $active_cycle->delivery_id() && $_GET['delivery_id'] > 0)
   {
     $delivery_id = $_GET['delivery_id'];
   }
 else
   {
-    $delivery_id = ActiveCycle::delivery_id();
+    $delivery_id = $active_cycle->delivery_id();
   }
 
 // Get the target delivery date
 $query = '
-  SELECT
-    delivery_date
-  FROM
-    '.TABLE_ORDER_CYCLES.'
-  WHERE
-    delivery_id = "'.mysql_real_escape_string ($delivery_id).'"';
+  SELECT delivery_date
+  FROM '.TABLE_ORDER_CYCLES.'
+  WHERE delivery_id = "'.mysql_real_escape_string ($delivery_id).'"';
 $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 893032 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
 if ( $row = mysql_fetch_array($result) )
   {
@@ -519,7 +517,7 @@ if ($delivery_id > 1)
   {
     $prior_delivery_link = '<a href="'.$_SERVER['SCRIPT_NAME'].'?delivery_id='.number_format($delivery_id - 1, 0).'">&larr; PRIOR &#151;</a>';
   }
-if ($delivery_id < ActiveCycle::delivery_id())
+if ($delivery_id < $active_cycle->delivery_id())
   {
     $next_delivery_link = '<a href="'.$_SERVER['SCRIPT_NAME'].'?delivery_id='.number_format($delivery_id + 1, 0).'">&#151; NEXT &rarr;</a>';
   }

@@ -8,8 +8,8 @@ include_once ('func.open_basket.php');
 // Get values for this operation
 // ... from the environment
 $member_id = $_SESSION['member_id'];
-$delivery_id = ActiveCycle::delivery_id();
-$basket_id = CurrentBasket::basket_id();
+$delivery_id = (new ActiveCycle())->delivery_id();
+$basket_id = (new CurrentBasket())->basket_id();
 // ... from add/subtract from basket
 $product_id = $_POST['product_id'];
 $product_version = $_POST['product_version'];
@@ -18,56 +18,50 @@ $action = $_POST['action'];
 $message = $_POST['message'];
 
 // If a basket is not already open, then open one...
-if (! $basket_id)
-  {
+if (!$basket_id)
+{
     $basket_info = open_basket (array (
-      'member_id' => $member_id,
-      'delivery_id' => $delivery_id,
-      ));
+        'member_id' => $member_id,
+        'delivery_id' => $delivery_id,
+    ));
     $basket_id = $basket_info['basket_id'];
-  }
+}
 // Make sure the number we think is in the basket is the number that really is in the basket
 $query = '
-  SELECT
-    (
-      SELECT
-        CONCAT(bpid,":",quantity)
-      FROM
-        '.NEW_TABLE_BASKET_ITEMS.'
-      WHERE
-        basket_id = "'.mysql_real_escape_string (CurrentBasket::basket_id()).'"
-        AND product_id = "'.mysql_real_escape_string ($product_id).'"
-        AND product_version = "'.mysql_real_escape_string ($product_version).'"
-    ) AS bpid_quantity,
-    '.NEW_TABLE_PRODUCTS.'.inventory_id,
-    '.NEW_TABLE_PRODUCTS.'.inventory_pull,
-    FLOOR('.TABLE_INVENTORY.'.quantity / '.NEW_TABLE_PRODUCTS.'.inventory_pull) AS inventory_quantity
-  FROM
-    '.NEW_TABLE_PRODUCTS.'
-  LEFT JOIN '.TABLE_INVENTORY.' ON '.TABLE_INVENTORY.'.inventory_id = '.NEW_TABLE_PRODUCTS.'.inventory_id
-  WHERE
-    '.NEW_TABLE_PRODUCTS.'.product_id = "'.mysql_real_escape_string ($product_id).'"
-    AND '.NEW_TABLE_PRODUCTS.'.product_version = "'.mysql_real_escape_string ($product_version).'"';
+    SELECT
+        (
+            SELECT CONCAT(bpid,":",quantity)
+            FROM '.NEW_TABLE_BASKET_ITEMS.'
+            WHERE basket_id = "'.mysql_real_escape_string($basket_id).'"
+            AND product_id = "'.mysql_real_escape_string($product_id).'"
+            AND product_version = "'.mysql_real_escape_string($product_version).'"
+        ) AS bpid_quantity,
+        '.NEW_TABLE_PRODUCTS.'.inventory_id,
+        '.NEW_TABLE_PRODUCTS.'.inventory_pull,
+        FLOOR('.TABLE_INVENTORY.'.quantity / '.NEW_TABLE_PRODUCTS.'.inventory_pull) AS inventory_quantity
+    FROM '.NEW_TABLE_PRODUCTS.'
+    LEFT JOIN '.TABLE_INVENTORY.' ON '.TABLE_INVENTORY.'.inventory_id = '.NEW_TABLE_PRODUCTS.'.inventory_id
+    WHERE '.NEW_TABLE_PRODUCTS.'.product_id = "'.mysql_real_escape_string($product_id).'"
+    AND '.NEW_TABLE_PRODUCTS.'.product_version = "'.mysql_real_escape_string($product_version).'"';
 $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 738102 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
-if ( $row = mysql_fetch_object($result) )
-  {
-    list ($bpid,$basket_quantity) = explode(':', $row->bpid_quantity);
-//    $basket_quantity = $row->quantity;
+if ($row = mysql_fetch_object($result) )
+ {
+    list($bpid, $basket_quantity) = explode(':', $row->bpid_quantity);
     $inventory_quantity = $row->inventory_quantity;
     $inventory_id = $row->inventory_id;
     $inventory_pull = $row->inventory_pull;
   }
-// Abort the operation if we do not have important information
 
-if (! $delivery_id ||
-    ! $member_id ||
-    ! $basket_id ||
-    ! $product_id ||
-    ! $product_version ||
-    ! $action)
-  {
+// Abort the operation if we do not have important information
+if (!$delivery_id ||
+    !$member_id ||
+    !$basket_id ||
+    !$product_id ||
+    !$product_version ||
+    !$action)
+{
     die(debug_print ("ERROR: 545721 ", 'Call without necessary information.', basename(__FILE__).' LINE '.__LINE__));
-  }
+}
 if ($action == "add")
   {
     // Create new basket item

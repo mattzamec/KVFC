@@ -3,24 +3,23 @@ include_once 'config_openfood.php';
 session_start();
 // valid_auth('member'); // anyone can see this list
 
-
 // Items dependent upon the location of this header
 $color1 = "#DDDDDD";
 $color2 = "#CCCCCC";
 $row_count = 0;
 
 if ($_GET['show'] == 'all')
-  {
+{
     $show_all = true;
     $show_unlisted_query = '';
-  }
+}
 else
-  {
+{
     // We ALWAYS do not show suspended producers.
     // But on this condition, also do not show "unlisted" producers.
     $show_unlisted_query = '
     AND '.TABLE_PRODUCER.'.unlisted_producer != 1 /* NOT UNLISTED */';
-  }
+}
 
 $query = '
   SELECT
@@ -28,29 +27,26 @@ $query = '
     '.TABLE_PRODUCER.'.business_name,
     '.TABLE_PRODUCER.'.producttypes,
     IF('.TABLE_PRODUCER.'.unlisted_producer < 1, COUNT('.NEW_TABLE_PRODUCTS.'.product_id), 0) AS product_count
-  FROM
-    '.TABLE_PRODUCER.'
+  FROM '.TABLE_PRODUCER.'
   LEFT JOIN '.NEW_TABLE_PRODUCTS.' ON '.TABLE_PRODUCER.'.producer_id = '.NEW_TABLE_PRODUCTS.'.producer_id
   LEFT JOIN '.TABLE_INVENTORY.' USING(inventory_id)
-  WHERE
-    '.NEW_TABLE_PRODUCTS.'.listing_auth_type = "member"
-    AND '.TABLE_PRODUCER.'.pending = 0
-    AND '.NEW_TABLE_PRODUCTS.'.confirmed = 1
-    AND '.TABLE_PRODUCER.'.unlisted_producer != 2 /* NOT SUSPENDED */'.
-    $show_unlisted_query.'
-  GROUP BY
-    '.TABLE_PRODUCER.'.producer_id
-  ORDER BY
-    '.TABLE_PRODUCER.'.business_name';
+  WHERE '.NEW_TABLE_PRODUCTS.'.listing_auth_type = "member"
+  AND '.TABLE_PRODUCER.'.pending = 0
+  AND '.TABLE_PRODUCER.'.is_bulk = 0
+  AND '.NEW_TABLE_PRODUCTS.'.confirmed = 1
+  AND '.TABLE_PRODUCER.'.unlisted_producer != 2 /* NOT SUSPENDED */'.
+  $show_unlisted_query.'
+  GROUP BY '.TABLE_PRODUCER.'.producer_id
+  ORDER BY '.TABLE_PRODUCER.'.business_name';
 $result = @mysql_query($query,$connection) or die(debug_print ("ERROR: 897650 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
 while ( $row = mysql_fetch_array($result) )
-  {
+{
     $producer_id = $row['producer_id'];
     $business_name = $row['business_name'];
     $producttypes = $row['producttypes'];
     $product_count = $row['product_count'];
     if ($product_count > 0 || $show_all)
-      {
+    {
         $show_name = "";
         $row_color = ($row_count % 2) ? $color1 : $color2;
         $display_top .= '
@@ -59,11 +55,11 @@ while ( $row = mysql_fetch_array($result) )
             <td width="75%">'.strip_tags ($producttypes).' ('.($product_count > 0 ? number_format ($product_count, 0).' '.Inflect::pluralize_if ($product_count, 'product') : 'no products currently listed').')</font></td>
           </tr>';
         $row_count++;
-      }
-  }
+    }
+}
 
 if ($show_all)
-  {
+{
     $content_list .= '
   <font face="arial">
     All producers listed below have been approved for selling by '.SITE_NAME.', although some
@@ -72,9 +68,9 @@ if ($show_all)
     Not from this region? Don&rsquo;t despair. Many of these producers are ready and able
     to ship their products to you, including frozen meats! Please contact the producers
     directly about the shipping policies. <br><br>';
-  }
+}
 else
-  {
+{
     $content_list .= '
   <font face="arial">
     Only coop producer members with products to sell this month are listed on this page.
@@ -84,7 +80,7 @@ else
     Not from this region? Don&rsquo;t despair. Many of these producers are ready and able
     to ship their products to you, including frozen meats! Please contact the producers
     directly about the shipping policies. <br><br>';
-  }
+}
 
 $content_list .= '
     <table cellpadding="2" cellspacing="2" border="0">

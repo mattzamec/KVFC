@@ -16,10 +16,9 @@ if ($_REQUEST['action'] == 'get_delivery_date')
             date_open,
             date_closed,
             delivery_date
-          FROM
-            '.TABLE_ORDER_CYCLES.'
-          WHERE
-               DATE_FORMAT(delivery_date,"%c %e") LIKE "%'.$escaped_search.'%" /* "6 15" */
+          FROM '.TABLE_ORDER_CYCLES.'
+          WHERE is_bulk = 0 AND
+            (DATE_FORMAT(delivery_date,"%c %e") LIKE "%'.$escaped_search.'%" /* "6 15" */
             OR DATE_FORMAT(delivery_date,"%c %d") LIKE "%'.$escaped_search.'%" /* "5 02" */
             OR DATE_FORMAT(delivery_date," %Y") LIKE "%'.$escaped_search.'%" /* " 2011" */
             OR DATE_FORMAT(delivery_date," %y") LIKE "%'.$escaped_search.'%"  /* " 11" */
@@ -38,7 +37,7 @@ if ($_REQUEST['action'] == 'get_delivery_date')
             OR DATE_FORMAT(date_closed,"%M") LIKE "%'.$escaped_search.'%" /* "January" */
 
             OR CONCAT("d", delivery_id) = "'.$escaped_search.'" /* Like d87 */
-            OR CONCAT("delivery:", delivery_id) = "'.$escaped_search.'" /* Like delivery:87 */
+            OR CONCAT("delivery:", delivery_id) = "'.$escaped_search.'" /* Like delivery:87 */)
           ORDER BY delivery_id DESC
           LIMIT 20';
         $result = mysql_query($query, $connection) or die(debug_print ("ERROR: 574093 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));

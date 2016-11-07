@@ -14,6 +14,7 @@ namespace OmSkimmer
         #region Members
 
         private Boolean disposed = false;
+        private readonly Int32 numberToProcess = 0;
 
         private const String OmSiteRoot = @"http://www.omfoods.com/organic-bulk-food";
         private const String CategoryClassName = @"SideCategoryListFlyout";
@@ -24,6 +25,7 @@ namespace OmSkimmer
         private const String SizeDivClassName = @"productOptionViewRadio";
         private const String PriceClassName = @"PriceRow";
         private const String PriceMetaItemprop = @"price";
+        private const String ProductDescriptionClassName = @"ProductDescriptionContainer";
         private const String OutOfStockHack = @"$(""#ProductDetails"").updateProductDetails({""purchasable"":false,""purchasingMessage"":""Out of Stock""";
 
         private readonly Logger logger;
@@ -33,11 +35,14 @@ namespace OmSkimmer
         #region Constructors
 
         /// <summary>
-        /// Default empty constructor
+        /// Constructor accepting processing options and number of products to process
         /// </summary>
-        public HtmlParser()
+        /// <param name="outputOptions">Output options</param>
+        /// <param name="processThisMany">Number of products to process (useful for testing purposes)</param>
+        public HtmlParser(Shared.Options outputOptions, Int32 processThisMany = 0)
         {
-            this.logger = new Logger();
+            this.numberToProcess = processThisMany;
+            this.logger = new Logger(outputOptions);
         }
         
         #endregion Constructors
@@ -91,10 +96,17 @@ namespace OmSkimmer
 
                 // Process each category page
                 Int32 currentCategoryIndex = 0;
+                Int32 productsProcessed = 0;
+                List<Product> productList = new List<Product>();
                 foreach (Tuple<String, String> categoryTuple in categoryTupleList)
                 {
+                    if (this.numberToProcess > 0 && productsProcessed >= this.numberToProcess)
+                    {
+                        break;
+                    }
+                    
                     this.logger.BlankLineInConsole();
-                    this.logger.WriteToConsoleAndLogFile("Reading {0} page ({1} of {2}... ", categoryTuple.Item1, ++ currentCategoryIndex, categoryTupleList.Count);
+                    this.logger.WriteToConsoleAndLogFile("Reading {0} page ({1} of {2}) ... ", categoryTuple.Item1, ++currentCategoryIndex, categoryTupleList.Count);
 
                     HtmlDocument categoryPage = this.ReadPage(categoryTuple.Item2);
                     if (categoryPage == null)   // Skip failed category URLs
@@ -126,8 +138,17 @@ namespace OmSkimmer
                         this.logger.OverwriteLineToConsole("Processing product {0} of {1} for {2}.",
                             ++currentProductIndex, productTupleList.Count, categoryTuple.Item1);
 
+                        // If this URL was already processed for another category, skip it
+                        Product processedProduct = productList.FirstOrDefault(p => p.OmUrl == productTuple.Item2);
+                        if (processedProduct != null)
+                        {
+                            this.logger.WriteLineToLogFile(
+                                "SKIPPING {0} ({1}) - THIS WAS ALREADY PROCESSED FOR CATEGORY {2} ... ",
+                                productTuple.Item1, productTuple.Item2, processedProduct.Category);
+                            continue;
+                        }
+                        
                         this.logger.WriteToLogFile("Reading {0} page ... ", productTuple.Item1);
-
                         HtmlDocument productPage = this.ReadPage(productTuple.Item2, true, false);
                         if (productPage == null)    // If we couldn't read the product page, move on, there's nothing we can do
                         {
@@ -144,8 +165,8 @@ namespace OmSkimmer
                             continue;
                         }
                         
-                        // Product name comes from the main product page
-                        String productName = this.GetProductName(productPage, productMainNode);
+                        // Product description is the HTML content of the appropriate div on the main product page
+                        String productDescription = this.GetProductDescription(productPage);
 
                         // Organic Matters product ID can come from several places on the page; a hidden input seems to be a good place
                         Int32 productId = this.GetOmProductId(productMainNode);
@@ -159,6 +180,7 @@ namespace OmSkimmer
                         // If there are not, we'll parse the price and availability from the page and that's all we got
                         if (sizeRadioNodeList.Any())
                         {
+                            Boolean firstSize = true;     // We'll only retrieve the description for the first size of the product since it will be the same for all
                             foreach (HtmlNode radioNode in sizeRadioNodeList)
                             {
                                 String jsonResult = String.Empty;
@@ -193,13 +215,18 @@ namespace OmSkimmer
 
                                 OmProduct omProduct = JsonConvert.DeserializeObject<OmProduct>(jsonResult);
 
-                                Product product = new Product();
-                                product.Name = productName;
-                                product.OmId = productId;
-                                product.Size = this.GetSizeDescriptionFromRadioButton(radioNode.ParentNode);
-                                product.Price = omProduct.details.unformattedPrice;
-                                product.Sku = omProduct.details.sku;
-                                product.IsInStock = omProduct.details.instock;
+                                Product product = new Product
+                                {
+                                    Name = productTuple.Item1,
+                                    Description = firstSize ? productDescription : String.Empty,
+                                    Category = categoryTuple.Item1,
+                                    OmId = productId,
+                                    OmUrl = productTuple.Item2,
+                                    Size = this.GetSizeDescriptionFromRadioButton(radioNode.ParentNode),
+                                    Price = omProduct.details.unformattedPrice,
+                                    Sku = omProduct.details.sku,
+                                    IsInStock = omProduct.details.instock
+                                };
 
                                 if (String.IsNullOrEmpty(product.Sku))
                                 {
@@ -207,17 +234,23 @@ namespace OmSkimmer
                                 }
                                 else
                                 {
-                                    this.logger.WriteProductToCsv(product);
+                                    productList.Add(product);
+                                    firstSize = false;
                                 }
                             }
                         }
-                        else
+                        else    // There are no size radio buttons, so we only have a single product to worry about
                         {
-                            Product product = new Product();
-                            product.Name = productName;
-                            product.OmId = productId;
-                            product.Sku = this.GetSku(productMainNode);
-                            product.Price = this.GetPrice(productPage.DocumentNode);
+                            Product product = new Product
+                            {
+                                Name = productTuple.Item1,
+                                Description = productDescription,
+                                Category = categoryTuple.Item1,
+                                OmId = productId,
+                                OmUrl = productTuple.Item2,
+                                Sku = this.GetSku(productMainNode),
+                                Price = this.GetPrice(productPage.DocumentNode)
+                            };
                             // Hacky way to determine if product is out of stock
                             product.IsInStock = product.Price > 0.00m
                                 && !productPage.ToString().Contains(OutOfStockHack);
@@ -229,11 +262,18 @@ namespace OmSkimmer
                             }
                             else
                             {
-                                this.logger.WriteProductToCsv(product);
+                                productList.Add(product);
                             }
+                        }
+
+                        if (this.numberToProcess > 0 && ++productsProcessed >= this.numberToProcess)
+                        {
+                            break;
                         }
                     }
                 }
+
+                this.logger.WriteProductInfo(productList);
             }
             catch (Exception ex)
             {
@@ -363,34 +403,47 @@ namespace OmSkimmer
         /// Parses the product name from the main product div element or the main product page title
         /// </summary>
         /// <param name="productPage">Entire product page document</param>
-        /// <param name="productMainNode">Main product div node (probably redundant)</param>
+        /// <param name="productMainNode">Main product div node</param>
         /// <returns>Product name parsed from the page/div supplied</returns>
-        private String GetProductName(HtmlDocument productPage, HtmlNode productMainNode)
-        {
-            // The product name should be in the main product div in a <h1> tag with itemprop="name" attribute
-            String productName = String.Empty;
-            HtmlNode nameNode = this.GetDescendantListByItempropName(productMainNode, "h1", NameH1Itemprop, true).FirstOrDefault();
-            if (nameNode != null)
-            {
-                productName = nameNode.InnerText;
-            }
-            else // If the name node is not present, we can get the name from the title 
-            {
-                HtmlNode titleNode = productPage.DocumentNode.Descendants("title").SingleOrDefault();
-                // This will throw an exception if there isn't one. Would FirstOrDefault be better?
-                if (titleNode != null)
-                {
-                    // The title seems to end with "... - Organic Matters", so let's strip that off if it's there
-                    productName = titleNode.InnerText;
-                    if (productName.EndsWith(" - Organic Matters", StringComparison.OrdinalIgnoreCase))
-                    {
-                        productName = productName.Substring(0,
-                            productName.IndexOf(" - Organic Matters", StringComparison.OrdinalIgnoreCase));
-                    }
-                }
-            }
+        //private String GetProductName(HtmlDocument productPage, HtmlNode productMainNode)
+        //{
+        //    // The product name should be in the main product div in a <h1> tag with itemprop="name" attribute
+        //    String productName = String.Empty;
+        //    HtmlNode nameNode = this.GetDescendantListByItempropName(productMainNode, "h1", NameH1Itemprop, true).FirstOrDefault();
+        //    if (nameNode != null)
+        //    {
+        //        productName = nameNode.InnerText;
+        //    }
+        //    else // If the name node is not present, we can get the name from the title 
+        //    {
+        //        HtmlNode titleNode = productPage.DocumentNode.Descendants("title").SingleOrDefault();
+        //        // This will throw an exception if there isn't one. Would FirstOrDefault be better?
+        //        if (titleNode != null)
+        //        {
+        //            // The title seems to end with "... - Organic Matters", so let's strip that off if it's there
+        //            productName = titleNode.InnerText;
+        //            if (productName.EndsWith(" - Organic Matters", StringComparison.OrdinalIgnoreCase))
+        //            {
+        //                productName = productName.Substring(0,
+        //                    productName.IndexOf(" - Organic Matters", StringComparison.OrdinalIgnoreCase));
+        //            }
+        //        }
+        //    }
 
-            return productName;
+        //    return productName;
+        //}
+
+        /// <summary>
+        /// Parses the product description - including HTML markup - from the main product page
+        /// </summary>
+        /// <param name="productPage">Entire product page document</param>
+        /// <returns>Product name parsed from the page/div supplied</returns>
+        private String GetProductDescription(HtmlDocument productPage)
+        {
+            HtmlNode descriptionNode = this.GetDescendantListByClassName(productPage.DocumentNode, "div",
+                ProductDescriptionClassName).FirstOrDefault();
+
+            return descriptionNode == null ? String.Empty : descriptionNode.InnerHtml.Trim();
         }
 
         /// <summary>
@@ -421,7 +474,7 @@ namespace OmSkimmer
         private String GetSku(HtmlNode productNode)
         {
             HtmlNode skuNode = this.GetDescendantListByItempropName(productNode, "span", SkuSpanItemprop, true).FirstOrDefault();
-            return skuNode == null ? String.Empty : skuNode.InnerText;
+            return skuNode == null ? String.Empty : skuNode.InnerText.Trim();
         }
 
         /// <summary>

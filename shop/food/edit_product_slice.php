@@ -74,10 +74,8 @@ $query = '
     producer_markdown,
     wholesale_markup,
     retail_markup
-  FROM
-    '.TABLE_ORDER_CYCLES.'
-  WHERE
-    delivery_id = "'.mysql_real_escape_string (ActiveCycle::delivery_id_next()).'"';
+  FROM '.TABLE_ORDER_CYCLES.'
+  WHERE delivery_id = "'.mysql_real_escape_string ((new NextCycle())->delivery_id()).'"';
 $result = @mysql_query($query, $connection) or die(mysql_error());
 if ( $row = mysql_fetch_array($result) )
   {

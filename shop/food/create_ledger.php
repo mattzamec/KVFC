@@ -104,8 +104,8 @@ $query = '
     '.TABLE_ORDER_CYCLES.'.delivery_id,
     '.TABLE_ORDER_CYCLES.'.delivery_date,
     COUNT('.NEW_TABLE_BASKETS.'.basket_id) AS quantity
-  FROM
-    '.TABLE_ORDER_CYCLES.'
+  FROM '.TABLE_ORDER_CYCLES.'
+  WHERE '.TABLE_ORDER_CYCLES.'.is_bulk = 0
   RIGHT JOIN '.NEW_TABLE_BASKETS.' ON '.TABLE_ORDER_CYCLES.'.delivery_id = '.NEW_TABLE_BASKETS.'.delivery_id
   GROUP BY '.NEW_TABLE_BASKETS.'.delivery_id';
 $result= mysql_query($query) or die("Error: 899032" . mysql_error());

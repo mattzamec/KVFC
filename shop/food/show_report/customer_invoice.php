@@ -221,17 +221,13 @@ $query_prior_closing = '
   SELECT
     date_closed,
     delivery_date
-  FROM
-    '.NEW_TABLE_BASKETS.'
-  LEFT JOIN
-    '.TABLE_ORDER_CYCLES.' USING(delivery_id)
-  WHERE
-    '.NEW_TABLE_BASKETS.'.member_id = "'.mysql_real_escape_string($member_id).'"
+  FROM '.NEW_TABLE_BASKETS.'
+  LEFT JOIN '.TABLE_ORDER_CYCLES.' USING(delivery_id)
+  WHERE '.NEW_TABLE_BASKETS.'.member_id = "'.mysql_real_escape_string($member_id).'"
+    AND '.TABLE_ORDER_CYCLES.'.is_bulk = 0
     AND '.TABLE_ORDER_CYCLES.'.date_closed < (SELECT date_closed FROM '.TABLE_ORDER_CYCLES.' WHERE delivery_id = "'.mysql_real_escape_string($delivery_id).'")
-  ORDER BY
-    '.TABLE_ORDER_CYCLES.'.date_closed DESC
-  LIMIT
-    0,1';
+  ORDER BY '.TABLE_ORDER_CYCLES.'.date_closed DESC
+  LIMIT 1';
 // echo "<pre>$query_prior_closing </pre>";
 $result_prior_closing = mysql_query($query_prior_closing, $connection) or die(debug_print ("ERROR: 754932 ", array ($query_prior_closing,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
 $and_since_prior_closing_date = '';

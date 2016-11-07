@@ -1,7 +1,7 @@
 <?php
 include_once 'config_openfood.php';
 session_start();
-valid_auth('site_admin,orderex');
+valid_auth('site_admin,orderex,bulk_admin');
 
 // Set defaults
 $errors_found = false;
@@ -89,8 +89,9 @@ if ($action == 'post_edit' || $action == 'post_new')
           </div>';
       }
   }
-if ($action == 'post_edit' && $errors_found == false)
+if ($action == 'post_edit' && !$errors_found)
   {
+    // Note that you cannot update the bulk order status of an existing order cycle
     $query = '
       UPDATE
         '.TABLE_ORDER_CYCLES.'
@@ -114,7 +115,7 @@ if ($action == 'post_edit' && $errors_found == false)
     // Close the modal and reload the cycle list
     $modal_action = 'reload_parent';
   }
-elseif ($action == 'post_new' && $errors_found == false)
+elseif ($action == 'post_new' && !$errors_found)
   {
     $query = '
       INSERT INTO
@@ -131,7 +132,8 @@ elseif ($action == 'post_new' && $errors_found == false)
         invoice_price = "'.mysql_real_escape_string($_POST['invoice_price']).'",
         producer_markdown = "'.mysql_real_escape_string($_POST['producer_markdown']).'",
         retail_markup = "'.mysql_real_escape_string($_POST['retail_markup']).'",
-        wholesale_markup = "'.mysql_real_escape_string($_POST['wholesale_markup']).'"';
+        wholesale_markup = "'.mysql_real_escape_string($_POST['wholesale_markup']).'",
+        is_bulk = "'.mysql_real_escape_string($_POST['is_bulk']).'"';
     $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 759821 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
     // Get the insert_id to use for the "delivery_id" field
     $query = '
@@ -156,41 +158,60 @@ elseif ($action == 'delete')
     $modal_action = 'reload_parent';
   }
 // Query for information about this order cycle
-if ($errors_found == true)
-  {
+if ($errors_found)
+{
     $order_cycle_info = $_POST;
-  }
+}
+elseif ($action == 'start_new')
+{
+    $new_cycle = new NewCycle();
+    $delivery_id = '';
+    $date_open = $new_cycle->date_open();
+    $date_closed = $new_cycle->date_closed();
+    $delivery_date = $new_cycle->delivery_date();
+    $order_fill_deadline = $new_cycle->order_fill_deadline();
+    $customer_type = 'member';    // Default customer type; KVFC doesn't use institution orders
+    $msg_all = $new_cycle->msg_all();
+    $msg_bottom = $new_cycle->msg_bottom();
+    $coopfee = $new_cycle->coopfee();
+    $invoice_price = $new_cycle->invoice_price();    /* 0=show coop price; 1=show retail price */
+    $producer_markdown = $new_cycle->producer_markdown();
+    $retail_markup = $new_cycle->retail_markup();
+    $wholesale_markup = $new_cycle->wholesale_markup();
+    $is_bulk = 0;
+
+    $message = '<p class="message">Please verify the default values below before creating the new cycle.</p>';
+}
 else
-  {
+{
     $query = '
-      SELECT
-        *
-      FROM
-        '.TABLE_ORDER_CYCLES.'
-      WHERE
-        delivery_id="'.mysql_real_escape_string ($delivery_id).'"';
+      SELECT *
+      FROM '.TABLE_ORDER_CYCLES.'
+      WHERE delivery_id="'.mysql_real_escape_string ($delivery_id).'"';
     $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 759821 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
     $order_cycle_info = mysql_fetch_array($result);
-  }
-// Assign variables for display in the form
-$delivery_id = $order_cycle_info['delivery_id'];
-$date_open = $order_cycle_info['date_open'];
-$date_closed = $order_cycle_info['date_closed'];
-$delivery_date = $order_cycle_info['delivery_date'];
-$order_fill_deadline = $order_cycle_info['order_fill_deadline'];
-$customer_type = $order_cycle_info['customer_type'];
-$msg_all = $order_cycle_info['msg_all'];
-$msg_bottom = $order_cycle_info['msg_bottom'];
-$coopfee = $order_cycle_info['coopfee'];
-$invoice_price = $order_cycle_info['invoice_price'];    /* 0=show coop price; 1=show retail price */
-$producer_markdown = $order_cycle_info['producer_markdown'];
-$retail_markup = $order_cycle_info['retail_markup'];
-$wholesale_markup = $order_cycle_info['wholesale_markup'];
+
+    // Assign variables for display in the form
+    $delivery_id = $order_cycle_info['delivery_id'];
+    $date_open = $order_cycle_info['date_open'];
+    $date_closed = $order_cycle_info['date_closed'];
+    $delivery_date = $order_cycle_info['delivery_date'];
+    $order_fill_deadline = $order_cycle_info['order_fill_deadline'];
+    $customer_type = $order_cycle_info['customer_type'];
+    $msg_all = $order_cycle_info['msg_all'];
+    $msg_bottom = $order_cycle_info['msg_bottom'];
+    $coopfee = $order_cycle_info['coopfee'];
+    $invoice_price = $order_cycle_info['invoice_price'];    /* 0=show coop price; 1=show retail price */
+    $producer_markdown = $order_cycle_info['producer_markdown'];
+    $retail_markup = $order_cycle_info['retail_markup'];
+    $wholesale_markup = $order_cycle_info['wholesale_markup'];
+    $is_bulk = $order_cycle_info['is_bulk'];
+}
 
 // See documentation for the auto-fill menu at http://api.jqueryui.com/autocomplete/
 
 $display .= '
-  <h3>Configure Order Cycle '.$delivery_id.'</h3>
+  <h3>'.($delivery_id ? "Configure ".($is_bulk ? "Bulk " : "")."Order Cycle $delivery_id" : "Start a New Order Cycle").'</h3>
   '.$error_message.'
   '.$message.'
   <div id="main_content">
@@ -205,16 +226,18 @@ $display .= '
         <label for="order_fill_deadline">Order Fill Deadline (date/time)</label>
         <input type="text" id="order_fill_deadline" name="order_fill_deadline" required placeholder="YYYY-MM-DD HH:MM:SS" value="'.$order_fill_deadline.'">
         <label for="delivery_date">Delivery Date (date)</label>
-        <input type="text" id="delivery_date" name="delivery_date" required placeholder="YYYY-MM-DD" value="'.$delivery_date.'">
-        <label>Shopping enabled for:</label>
-        <div class="option_block">
-          <label for="customer_type_institution">Retail Members</label>
-          <input type="checkbox" id="customer_type_institution" name="customer_type_member" value="true"'.(strpos($customer_type,'member') !== false ? ' checked' : '').'>
-        </div>
-        <div class="option_block">
-          <label for="customer_type_institution">Institutions</label>
-          <input type="checkbox" id="customer_type_institution" name="customer_type_institution" value="true"'.(strpos($customer_type,'institution') !== false ? ' checked' : '').'>
-        </div>
+        <input type="text" id="delivery_date" name="delivery_date" required placeholder="YYYY-MM-DD" value="'.$delivery_date.'">'.
+        // KVFC doesn't sell wholesale to institutions, so this option can be removed from the UI
+        //<label>Shopping enabled for:</label>
+        //<div class="option_block">
+        //  <label for="customer_type_institution">Retail Members</label>
+        //  <input type="checkbox" id="customer_type_institution" name="customer_type_member" value="true"'.(strpos($customer_type,'member') !== false ? ' checked' : '').'>
+        //</div>
+        //<div class="option_block">
+        //  <label for="customer_type_institution">Institutions</label>
+        //  <input type="checkbox" id="customer_type_institution" name="customer_type_institution" value="true"'.(strpos($customer_type,'institution') !== false ? ' checked' : '').'>
+        //</div>
+        '
         <label>How to show fees on invoice:</label>
         <div class="option_block">
           <label for="show_customer">Fees included in prices</label>
@@ -223,7 +246,12 @@ $display .= '
         <div class="option_block">
           <label for="show_coop">Separate line-item for fees</label>
           <input type="radio" id="show_coop" name="invoice_price" value="0"'.($invoice_price == 0 ? ' checked="checked"' : '').'>
-        </div>
+        </div>'.(strtolower(substr($action, 0, 5)) == 'start' && CurrentMember::auth_type('bulk_admin') ? '
+        <label></label>
+        <div class="option_block">
+          <label for="is_bulk">Bulk Order</label>
+          <input type="checkbox" id="is_bulk" name="is_bulk" value="1" '.($is_bulk == 1 ? ' checked' : '').'>
+        </div>' : '').'
       </fieldset>
       <fieldset class="deprecated">
         <legend>Unused Fields (will be removed)</legend>
@@ -237,9 +265,9 @@ $display .= '
         <input type="text" id="wholesale_markup" name="wholesale_markup" pattern="\d*(\.\d{0,3}){0,1}" value="'.number_format($wholesale_markup, 3).'">
       </fieldset>
       <fieldset class="controls">
-        '.($show_update_button == true ? '<input type="submit" id="action_update" name="action" value="Update">' : '').'
-        '.($show_new_button == true ? '<input type="submit" id="action_add_new" name="action" value="Add As New">' : '').'
-        '.($show_delete_button == true ? '<input type="submit" id="action_delete" name="action" form="null" value="Delete">' : '').'
+        '.($show_update_button ? '<input type="submit" id="action_update" name="action" value="Update">' : '').'
+        '.($show_new_button ? '<input type="submit" id="action_add_new" name="action" value="Add As New">' : '').'
+        '.($show_delete_button ? '<input type="submit" id="action_delete" name="action" form="null" value="Delete">' : '').'
         <input type="reset" value="Reset">
       </fieldset>
       <fieldset class="optional">
@@ -422,7 +450,6 @@ $page_specific_css = '
       color:#fff;
       }
   </style>';
-
 
 // This is always a popup dialog
 $display_as_popup = true;

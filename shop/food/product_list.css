@@ -1,5 +1,3 @@
-<style type="text/css">
-
 /* Following styles are for category_list2.php */
 
 span.levelX {
@@ -12,7 +10,6 @@ span.levelY {
 span.levelZ {
   font-size:80%;
   }
-
 
 /*  ul.cat0 .. ul.cat4 are absolute positions in the list being displayed */
 /*  li.cat0 .. li.cat4 are relative positions based on the offset value   */

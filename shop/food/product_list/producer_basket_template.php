@@ -115,15 +115,13 @@ function ordering_unit_display_calc($data)
     : '');
   };
 
-
 // INVENTORY_DISPLAY_CALC
 function inventory_display_calc($data)
   { return
     ($data['inventory_id'] ?
-    '<span id="available'.$data['product_id'].'">'.($data['inventory_quantity'] == 0 ? '[OUT OF STOCK] 0 ' : $data['inventory_quantity']).'</span> '.Inflect::pluralize_if ($data['inventory_quantity'], $data['ordering_unit']).' available. '
+    '<span id="available'.$data['product_id'].'X'.$data['product_version'].'">'.($data['inventory_quantity'] == 0 ? '[OUT OF STOCK] 0 ' : $data['inventory_quantity']).'</span> '.Inflect::pluralize_if ($data['inventory_quantity'], $data['ordering_unit']).' available. '
     : '');
   };
-
 
 // IMAGE_DISPLAY_CALC
 function image_display_calc($data)
@@ -132,7 +130,6 @@ function image_display_calc($data)
     '<img src="'.get_image_path_by_id ($data['image_id']).'" class="product_image">'
     : '');
   };
-
 
 // PRODTYPE_DISPLAY_CALC
 function prodtype_display_calc($data)
@@ -224,11 +221,13 @@ function order_cycle_navigation($data)
       ($_GET['subcat_id'] ? '&subcat_id='.$_GET['subcat_id'] : '').
       ($_GET['query'] ? '&query='.$_GET['query'] : '').
       ($_GET['a'] ? '&a='.$_GET['a'] : '');
+
+    $delivery_id = $_GET['delivery_id'] ? $_GET['delivery_id'] : (new ActiveCycle())->delivery_id();
     return
     '<div id="delivery_id_nav">
-    <a class="prior" href="'.$_SERVER['SCRIPT_NAME'].'?delivery_id='.($_GET['delivery_id'] ? ($_GET['delivery_id'] - 1) : ActiveCycle::delivery_id() - 1).$http_get_query.'">&larr; PRIOR ORDER </a>
-    <span class="delivery_id">'.date (DATE_FORMAT_CLOSED, strtotime(ActiveCycle::delivery_date($_GET['delivery_id']))).'</span>
-    <a class="next" href="'.$_SERVER['SCRIPT_NAME'].'?delivery_id='.($_GET['delivery_id'] ? ($_GET['delivery_id'] + 1) : ActiveCycle::delivery_id() + 1).$http_get_query.'"> NEXT ORDER &rarr;</a>
+    <a class="prior" href="'.$_SERVER['SCRIPT_NAME'].'?delivery_id='.($delivery_id - 1).$http_get_query.'">&larr; PRIOR ORDER </a>
+    <span class="delivery_id">'.date(DATE_FORMAT_CLOSED, strtotime((new SpecificCycle($_GET['delivery_id']))->delivery_date())).'</span>
+    <a class="next" href="'.$_SERVER['SCRIPT_NAME'].'?delivery_id='.($delivery_id + 1).$http_get_query.'"> NEXT ORDER &rarr;</a>
   </div>';
   };
 

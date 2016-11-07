@@ -81,7 +81,7 @@ if ($_GET['producer_id_you'])
 //       }
 //   }
 
-// Get a list of all the producer_id values for this member
+// Get a list of all the producer_id values
 $query = '
   SELECT
     member_id,
@@ -89,10 +89,8 @@ $query = '
     business_name,
     pending AS pending_producer,
     unlisted_producer
-  FROM
-    '.TABLE_PRODUCER.'
-  WHERE
-    1
+  FROM '.TABLE_PRODUCER.'
+  WHERE is_bulk = 0
   ORDER BY
     unlisted_producer,
     business_name';
@@ -161,15 +159,7 @@ while ( $row = mysql_fetch_object($result) )
     $producer_count ++;
   }
 
-
-
-
-
-/////////////// FINISH PRE-PROCESSING AND BEGIN PAGE GENERATION /////////////////
-
-
-
-
+$delivery_id = (new ActiveCycle())->delivery_id();
 // Generate the display output
 $display .= '
   <table width="100%" class="compact">
@@ -224,8 +214,8 @@ if ($_SESSION['producer_id_you'])
             <li><a href="order_summary.php">Order Summary</a></li>
             <li><a href="show_report.php?type=producer_invoice">Producer Invoice</a></li>
             <li class="last_of_group"><a href="past_producer_invoices.php?producer_id='.$_SESSION['producer_id_you'].'">Past Producer Invoices</a></li>
-            <li><a href="route_list.php?delivery_id='.ActiveCycle::delivery_id().'&type=pickup&producer_id='.$_SESSION['producer_id_you'].'">Routing Checklist (by customer)</a></li>
-            <li class="last_of_group"><a href="route_list.php?delivery_id='.ActiveCycle::delivery_id().'&type=dropoff&producer_id='.$_SESSION['producer_id_you'].'">Routing Checklist (by destination)</a></li>
+            <li><a href="route_list.php?delivery_id='.$delivery_id.'&type=pickup&producer_id='.$_SESSION['producer_id_you'].'">Routing Checklist (by customer)</a></li>
+            <li class="last_of_group"><a href="route_list.php?delivery_id='.$delivery_id.'&type=dropoff&producer_id='.$_SESSION['producer_id_you'].'">Routing Checklist (by destination)</a></li>
           </ul>
           <img src="'.DIR_GRAPHICS.'product.png" width="32" height="32" align="left" hspace="2" alt="Edit your products"><br>
           <b>Edit '.$active_business_name.' Products</b>
@@ -253,7 +243,7 @@ $display .= '
           <img src="'.DIR_GRAPHICS.'kcron.png" width="32" height="32" align="left" hspace="2" alt="Delivery Cycle Functions"><br>
           <b>Delivery Cycle Functions</b>
           <ul class="fancyList1">
-            <li class="last_of_group"><a href="orders_prdcr_list.php?delivery_id='.ActiveCycle::delivery_id().'">Producers with Customers this Cycle</a></li>
+            <li class="last_of_group"><a href="orders_prdcr_list.php?delivery_id='.$delivery_id.'">Producers with Customers this Cycle</a></li>
           </ul>
           <img src="'.DIR_GRAPHICS.'bottom.png" width="32" height="32" align="left" hspace="2" alt="Producer Membership Information"><br>
           <b>Producer Membership Information</b>

@@ -3,8 +3,8 @@ include_once 'config_openfood.php';
 session_start();
 valid_auth('site_admin,cashier');
 
-
 $num_cycles = 20; # should be 1 higher than the actual number of cycles you want
+$delivery_id = (new ActiveCycle())->delivery_id();
 
 $query = '
   SELECT
@@ -14,18 +14,16 @@ $query = '
     '.TABLE_CATEGORY.'.category_name,
     /* (!out_of_stock * if('.NEW_TABLE_PRODUCTS.'.random_weight = 1, '.NEW_TABLE_BASKET_ITEMS.'.item_price * total_weight, '.NEW_TABLE_BASKET_ITEMS.'.item_price * quantity)) AS real_price */
     ((1 - out_of_stock) * (('.NEW_TABLE_PRODUCTS.'.random_weight * '.NEW_TABLE_PRODUCTS.'.unit_price * total_weight) + ((1 - '.NEW_TABLE_PRODUCTS.'.random_weight) * '.NEW_TABLE_PRODUCTS.'.unit_price * quantity))) AS real_price
-  FROM
-    '.NEW_TABLE_BASKETS.'
+  FROM '.NEW_TABLE_BASKETS.'
   LEFT JOIN '.NEW_TABLE_BASKET_ITEMS.' ON '.NEW_TABLE_BASKET_ITEMS.'.basket_id = '.NEW_TABLE_BASKETS.'.basket_id
   LEFT JOIN '.TABLE_ORDER_CYCLES.' ON '.TABLE_ORDER_CYCLES.'.delivery_id = '.NEW_TABLE_BASKETS.'.delivery_id
   LEFT JOIN '.NEW_TABLE_PRODUCTS.' ON ('.NEW_TABLE_PRODUCTS.'.product_id = '.NEW_TABLE_BASKET_ITEMS.'.product_id AND '.NEW_TABLE_PRODUCTS.'.product_version = '.NEW_TABLE_BASKET_ITEMS.'.product_version)
   LEFT JOIN '.TABLE_SUBCATEGORY.' ON '.TABLE_SUBCATEGORY.'.subcategory_id = '.NEW_TABLE_PRODUCTS.'.subcategory_id
   LEFT JOIN '.TABLE_CATEGORY.' ON '.TABLE_CATEGORY.'.category_id = '.TABLE_SUBCATEGORY.'.category_id
-  WHERE
-    '.NEW_TABLE_BASKETS.'.delivery_id <= "'.mysql_real_escape_string (ActiveCycle::delivery_id()).'"
-    AND '.NEW_TABLE_BASKETS.'.delivery_id > "'.mysql_real_escape_string (ActiveCycle::delivery_id() - $num_cycles).'"
-  GROUP BY
-    '.NEW_TABLE_BASKET_ITEMS.'.bpid';
+  WHERE '.NEW_TABLE_BASKETS.'.is_bulk = 0
+  AND '.NEW_TABLE_BASKETS.'.delivery_id <= "'.mysql_real_escape_string ($delivery_id).'"
+  AND '.NEW_TABLE_BASKETS.'.delivery_id > "'.mysql_real_escape_string ($delivery_id - $num_cycles).'"
+  GROUP BY '.NEW_TABLE_BASKET_ITEMS.'.bpid';
 $main_sql = mysql_query($query);
 
 $categories = array ();
@@ -42,15 +40,12 @@ while ($row = mysql_fetch_array($main_sql))
   }
 
 $query = '
-  SELECT
-    delivery_date
-  FROM
-    '.TABLE_ORDER_CYCLES.'
-  WHERE
-    delivery_id <= "'.mysql_real_escape_string (ActiveCycle::delivery_id()).'"
-    AND delivery_id > "'.mysql_real_escape_string (ActiveCycle::delivery_id() - $num_cycles).'"
-  ORDER BY
-    delivery_date DESC';
+  SELECT delivery_date
+  FROM '.TABLE_ORDER_CYCLES.'
+  WHERE is_bulk = 0
+  AND delivery_id <= "'.mysql_real_escape_string($delivery_id).'"
+  AND delivery_id > "'.mysql_real_escape_string($delivery_id - $num_cycles).'"
+  ORDER BY delivery_date DESC';
 $dates_sql = mysql_query($query);
 
 $delivery_dates = array ();

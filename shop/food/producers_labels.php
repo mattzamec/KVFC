@@ -3,9 +3,8 @@ include_once 'config_openfood.php';
 session_start();
 valid_auth('site_admin,producer_admin');
 
-
 function prdcr_contact_info($start, $half)
-  {
+{
     global $connection;
     $query = '
       SELECT
@@ -26,14 +25,14 @@ function prdcr_contact_info($start, $half)
         '.TABLE_MEMBER.'
       WHERE
         '.TABLE_PRODUCER.'.member_id = '.TABLE_MEMBER.'.member_id
-        AND '.TABLE_PRODUCER.'.unlisted_producer = "0"
-        AND '.TABLE_MEMBER.'.membership_discontinued != "1"
-      ORDER BY
-        '.TABLE_PRODUCER.'.business_name ASC
+        AND '.TABLE_PRODUCER.'.unlisted_producer = 0
+        AND '.TABLE_PRODUCER.'.is_bulk = 0
+        AND '.TABLE_MEMBER.'.membership_discontinued != 1
+      ORDER BY '.TABLE_PRODUCER.'.business_name ASC
       LIMIT '.mysql_real_escape_string ($start).', '.mysql_real_escape_string ($half);
     $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 869302 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
     while ( $row = mysql_fetch_array($result) )
-      {
+    {
         $producer_id = $row['producer_id'];
         $business_name = $row['business_name'];
         $first_name = $row['first_name'];
@@ -52,17 +51,15 @@ function prdcr_contact_info($start, $half)
           }
         $display .= $city.', '.$state.' '.$zip.'<br>';
         $display .= '<br>';
-      }
+    }
     return $display;
-  }
+}
 
 $sql = '
-  SELECT
-    COUNT(producer_id) AS count
-  FROM
-    '.TABLE_PRODUCER.'
-  WHERE
-    unlisted_producer = "0"';
+  SELECT COUNT(producer_id) AS count
+  FROM '.TABLE_PRODUCER.'
+  WHERE unlisted_producer = 0
+  AND is_bulk = 0';
 $result = mysql_query($sql) or die("Couldn't execute query.");
 $row = mysql_fetch_array($result);
 $pid_count = $row['count'];
@@ -86,7 +83,6 @@ $page_title_html = '<span class="title">Reports</span>';
 $page_subtitle_html = '<span class="subtitle">Producer Labels</span>';
 $page_title = 'Reports: Producer Labels';
 $page_tab = 'producer_admin_panel';
-
 
 include("template_header.php");
 echo '

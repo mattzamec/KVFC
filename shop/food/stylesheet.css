@@ -232,8 +232,8 @@ table.compact tr td img {
   border:1px solid #040;
   border-right:0;
   background-color:#ffc;
-//  max-width:7%;
-//  width:7%;
+  max-width:7%;
+  width:7%;
   }
 .pager a {
   display:block;
@@ -269,7 +269,6 @@ table.compact tr td img {
   clear:both;
   }
 
-
 .bold {
   font-weight: bold;
   }
@@ -299,7 +298,6 @@ table.compact tr td img {
   background-color: #FFFFFF;
   width: 100%;
   }
-
 
 #noEndBox {
   border-top: 1px solid black;
@@ -357,20 +355,6 @@ table.compact tr td img {
   border-bottom: 1px solid #AAAAAA;
   }
 
-#grayWrapper {
-  width: 100%;
-  background-color: #EDF3FC;
-  padding: 4px;
-  /*margin-left: 10px;*/
-  color: #222222;
-  /*border-bottom: 1px solid #AAAAAA;*/
-  }
-
-#uberWrapper {
-  width: 800px;
-  }
-
-
 /* Set up display settings for the header menu */
 #menu {
   clear:both;
@@ -393,12 +377,10 @@ table.compact tr td img {
   }
 
 #menu a {
-
   display:block;
   overflow:hidden;
   padding:1px 4px;
   font-size:12px;
-  font-weight:normal;
   text-decoration:none;
   text-align:center;
   background-color:#ffe;
@@ -424,7 +406,7 @@ table.compact tr td img {
 
 #footer {
   width:95%;
-  background-color:#f5edd6;;
+  background-color:#f5edd6;
   padding:20px;
   text-align:center;
   border:0;
@@ -475,6 +457,7 @@ table.compact tr td img {
   margin:auto;
   border-bottom-left-radius: 15px;
   border-bottom-right-radius: 15px;
+  overflow: auto;
   }
 
 .title {
@@ -679,7 +662,7 @@ img {
   }
 
 li.last_of_group {
-  margin-bottom:2em;
+  margin-bottom:1em;
   }
 
 .list-markup1,

@@ -23,16 +23,10 @@ function format_help_link ($target)
 
 // Get the category/subcategory list and create a drop-down list
 $sqlsc = '
-  SELECT
-    *
-  FROM
-    '.TABLE_SUBCATEGORY.',
-    '.TABLE_CATEGORY.'
-  WHERE
-    '.TABLE_SUBCATEGORY.'.category_id = '.TABLE_CATEGORY.'.category_id
-  ORDER BY
-    category_name ASC,
-    subcategory_name ASC';
+  SELECT *
+  FROM '.TABLE_SUBCATEGORY.', '.TABLE_CATEGORY.'
+  WHERE '.TABLE_SUBCATEGORY.'.category_id = '.TABLE_CATEGORY.'.category_id
+  ORDER BY category_name ASC, subcategory_name ASC';
 $rs = @mysql_query($sqlsc, $connection) or die(debug_print ("ERROR: 906537 ", array ($sqlsc,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
 $display_subcat = '
   <option value="">Select Subcategory</option>';
@@ -64,14 +58,10 @@ $display_subcat .= '
   </optgroup>';
 // Get this producer's list of inventory options and create a drop-down list
 $query = '
-  SELECT
-    *
-  FROM
-    '.TABLE_INVENTORY.'
-  WHERE
-    producer_id = "'.mysql_real_escape_string ($producer_id).'"
-  ORDER BY
-    description';
+  SELECT *
+  FROM '.TABLE_INVENTORY.'
+  WHERE producer_id = "'.mysql_real_escape_string ($producer_id).'"
+  ORDER BY description';
 $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 649509 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
 $inventory_array = array();
 $inventory_array[0]['description'] = 'No inventory selected';
@@ -102,12 +92,8 @@ if (CurrentMember::auth_type('producer_admin,site_admin,cashier'))
         account_id,
         account_number,
         description
-      FROM
-        '.NEW_TABLE_ACCOUNTS.'
-      WHERE
-        1
-      ORDER BY
-        description';
+      FROM '.NEW_TABLE_ACCOUNTS.'
+      ORDER BY description';
     $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 099564 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
     $account_number_select = '
       <select name="account_number">
@@ -124,12 +110,9 @@ if (CurrentMember::auth_type('producer_admin,site_admin,cashier'))
 $product_types_options = '
       <option value="">Choose One</option>';
 $query = '
-  SELECT
-    *
-  FROM
-    '.TABLE_PRODUCT_TYPES.'
-  ORDER BY
-    prodtype';
+  SELECT *
+  FROM '.TABLE_PRODUCT_TYPES.'
+  ORDER BY prodtype';
 
 $sql =  @mysql_query($query, $connection) or die(debug_print ("ERROR: 947534 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
 while ($row = mysql_fetch_object($sql))
@@ -152,10 +135,8 @@ $query = '
   SELECT
     storage_id,
     storage_type
-  FROM
-    '.TABLE_PRODUCT_STORAGE_TYPES.'
-    ORDER BY
-        storage_type';
+  FROM '.TABLE_PRODUCT_STORAGE_TYPES.'
+  ORDER BY storage_type';
 $sql =  @mysql_query($query, $connection) or die(debug_print ("ERROR: 616609 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
                             while ($row = mysql_fetch_object($sql))
   {
@@ -201,8 +182,6 @@ $chkf3 = '';
 if     ($product_info['retail_staple'] == 1) $chkf1 = ' checked';
 elseif ($product_info['retail_staple'] == 2) $chkf2 = ' checked';
 elseif ($product_info['retail_staple'] == 3) $chkf3 = ' checked';
-
-
 
 // Can this be deleted???
 if (!$product_info['unit_price'] )
@@ -312,6 +291,7 @@ else
     <input type="hidden" name="product_fee_percent" id="product_fee_percent" value="'.$product_info['product_fee_percent'].'">
     <input type="hidden" name="confirmed" id="confirmed" value="'.$product_info['confirmed'].'">';
   }
+$next_cycle = new NextCycle();
 // Producer product fields
 $display .= '
     <input type="hidden" name="pvid" id="pvid" value="'.$product_info['pvid'].'">
@@ -375,7 +355,7 @@ $display .= '
         <table>
           <tr>
             <td style="padding:0 1em;" align="right">'.$alert5.'<b>Producer&nbsp;Price:</b></td>
-            <td><nobr>$ </b><input class="disabled" type="text" id="unit_price_prdcr" name="unit_price" value="'.number_format($show_unit_price * (1 - ActiveCycle::producer_markdown_next ()), 2).'" size="8" maxlength="8" disabled></nobr></td>
+            <td><nobr>$ </b><input class="disabled" type="text" id="unit_price_prdcr" name="unit_price" value="'.number_format($show_unit_price * (1 - $next_cycle->producer_markdown()), 2).'" size="8" maxlength="8" disabled></nobr></td>
             <td style="padding:0 1em;" rowspan="3"><b>per '.$alert5a.'<input name="pricing_unit" size="12" maxlength="12" value="'.$product_info['pricing_unit'].'"></b><br>
             <font size="-2">(Use singular, not plural; e.g. pound instead of pounds, loaf instead of loaves, ox instead of oxen, etc.)</font></td>
           </tr>
@@ -385,14 +365,14 @@ $display .= '
           </tr>
           <tr>
             <td style="padding:0 1em;" align="right">'.$alert5.'<b>Retail&nbsp;Price:</b></td>
-            <td><nobr>$</b> <input class="disabled" type="text" id="unit_price_cust" name="unit_price" value="'.number_format($show_unit_price * (1 + (SHOW_ACTUAL_PRICE ? ActiveCycle::retail_markup_next () : 0)) * (1 + ($product_info['product_fee_percent'] / 100) + ($product_info['subcategory_fee_percent'] / 100) + ($product_info['producer_fee_percent'] / 100)), 2).'" size="8" maxlength="8" disabled></nobr></td>
+            <td><nobr>$</b> <input class="disabled" type="text" id="unit_price_cust" name="unit_price" value="'.number_format($show_unit_price * (1 + (SHOW_ACTUAL_PRICE ? $next_cycle->retail_markup() : 0)) * (1 + ($product_info['product_fee_percent'] / 100) + ($product_info['subcategory_fee_percent'] / 100) + ($product_info['producer_fee_percent'] / 100)), 2).'" size="8" maxlength="8" disabled></nobr></td>
           </tr>';
 if (INSTITUTION_WINDOW > 0) // Only show wholesale values if there is a wholesale opportunity
   {
     $display .= '
           <tr>
             <td style="padding:0 1em;" align="right">'.$alert5.'<b>Wholesale&nbsp;Price:</b></td>
-            <td><nobr>$</b> <input type="text" id="unit_price_institution" name="unit_price" value="'.number_format($show_unit_price * (1 + (SHOW_ACTUAL_PRICE ? ActiveCycle::wholesale_markup_next () : 0)) * (1 + ($product_info['product_fee_percent'] / 100) + ($product_info['subcategory_fee_percent'] / 100) + ($product_info['producer_fee_percent'] / 100)), 2).'" size="8" maxlength="8" disabled></nobr></td>
+            <td><nobr>$</b> <input type="text" id="unit_price_institution" name="unit_price" value="'.number_format($show_unit_price * (1 + (SHOW_ACTUAL_PRICE ? $next_cycle->wholesale_markup() : 0)) * (1 + ($product_info['product_fee_percent'] / 100) + ($product_info['subcategory_fee_percent'] / 100) + ($product_info['producer_fee_percent'] / 100)), 2).'" size="8" maxlength="8" disabled></nobr></td>
           </tr>';
   }
 $display .= '

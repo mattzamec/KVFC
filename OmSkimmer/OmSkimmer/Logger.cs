@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
+using System.Linq;
 
 namespace OmSkimmer
 {
@@ -8,6 +11,8 @@ namespace OmSkimmer
         #region Members
 
         private Boolean disposed = false;
+        private readonly Shared.Options options;
+        private readonly DateTime startDate;
 
         private String outputRoot;
         private String OutputRoot
@@ -78,13 +83,41 @@ namespace OmSkimmer
         {
             get
             {
-                return this.csvStream ?? (this.csvStream = File.AppendText(this.CsvFileName));
+                return this.csvStream ?? (this.csvStream = File.CreateText(this.CsvFileName));
+            }
+        }
+
+        private String SqlFileName
+        {
+            get
+            {
+                return Path.Combine(this.OutputRoot, "OmProducts.sql");
+            }
+        }
+
+        private StreamWriter sqlStream;
+        private StreamWriter SqlStream
+        {
+            get
+            {
+                return this.sqlStream ?? (this.sqlStream = File.CreateText(this.SqlFileName));
             }
         }
 
         #endregion Members
 
         #region Constructors
+
+        /// <summary>
+        /// Constructor accepts output options
+        /// </summary>
+        /// <param name="outputOptions">Output options</param>
+        public Logger(Shared.Options outputOptions)
+        {
+            this.startDate = DateTime.Now;
+            this.options = outputOptions;
+            this.WriteLineToLogFile("********** LOGGING STARTED: {0} **************", this.startDate.ToString("F"));
+        }
 
         #endregion Constructors
 
@@ -143,9 +176,47 @@ namespace OmSkimmer
             this.BlankLineInLogFile();
         }
 
-        public void WriteProductToCsv(Product product)
+        public void WriteProductInfo(List<Product> productList)
         {
-            this.CsvStream.WriteLine(product.Csv);
+            if (this.options.HasFlag(Shared.Options.Excel))
+            {
+                this.WriteProductsToCsv(productList);
+            }
+            if (this.options.HasFlag(Shared.Options.Sql))
+            {
+                this.WriteProductsToSql(productList);
+            }
+        }
+
+        private void WriteProductsToCsv(List<Product> productList)
+        {
+            foreach (Product product in productList.OrderBy(p => p.Sku))
+            {
+                this.CsvStream.WriteLine("{0}, {1}{2}{3}, {4}, {5}",
+                    product.Sku.Replace(',', '?'), product.Name.Replace(',', '?'),
+                    String.IsNullOrEmpty(product.Size) ? String.Empty : " ", product.Size.Replace(',', '?'), product.Price.ToString("C"),
+                    product.IsInStock ? "In stock" : "OUT OF STOCK");
+            }
+        }
+
+        private void WriteProductsToSql(List<Product> productList)
+        {
+            foreach (Product product in productList.OrderBy(p => p.Sku))
+            {
+                this.SqlStream.WriteLine("CALL {0}('{1}', '{2}', '{3}', '{4}', {5}, '{6}', '{7}', {8});",
+                    ConfigurationManager.AppSettings["SqlProcName"],
+                    product.Sku, product.Name, product.Description.Replace("'", "''"), product.Category, product.Price,
+                    product.Size, this.startDate.ToString("yyyy-MM-dd HH:mm:ss"), product.IsInStock ? "0" : "1");
+            }
+            // Proc parameters:
+            //prm_sku VARCHAR(20),
+            //prm_name VARCHAR(75),
+            //prm_description LONGTEXT,
+            //prm_category VARCHAR(50),
+            //prm_unit_price DECIMAL(9, 3),
+            //prm_pricing_unit VARCHAR(50),
+            //prm_modified DATETIME,
+            //prm_is_unlisted BOOLEAN
         }
         
         #endregion Methods
@@ -167,6 +238,11 @@ namespace OmSkimmer
                     {
                         this.CsvStream.Close();
                         this.CsvStream.Dispose();
+                    }
+                    if (this.SqlStream != null)
+                    {
+                        this.SqlStream.Close();
+                        this.SqlStream.Dispose();
                     }
                 }
 

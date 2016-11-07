@@ -3,8 +3,9 @@ include_once 'config_openfood.php';
 session_start();
 valid_auth('route_admin,site_admin,member_admin,orderex');
 
+$active_cycle = new ActiveCycle();
 $delivery_id = $_GET['delivery_id'];
-if (!$delivery_id) $delivery_id = ActiveCycle::delivery_id();
+if (!$delivery_id) $delivery_id = $active_cycle->delivery_id();
 
 // Initialize with column headers
 $home_phone_display = '<span><strong>Home Phone</strong></span><br>';
@@ -73,7 +74,7 @@ $content_list = '
         <a href="'.$_SERVER['SCRIPT_NAME'].'?delivery_id='.($delivery_id - 1).'">Get list for prior order</a>
       </div>'
       : '').'
-      '.($delivery_id < ActiveCycle::delivery_id() ? '
+      '.($delivery_id < $active_cycle->delivery_id() ? '
       <div style="float:right;border:1px solid #440; background-color:#ffd;padding:3px 20px;">
         <a href="'.$_SERVER['SCRIPT_NAME'].'?delivery_id='.($delivery_id + 1).'">Get list for next order</a>
       </div>'

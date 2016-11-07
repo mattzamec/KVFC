@@ -3,7 +3,7 @@ include_once 'config_openfood.php';
 session_start();
 valid_auth('member_admin');
 
-
+$active_cycle = new ActiveCycle();
 $display_admin .= '
   <table width="100%" class="compact">
     <tr valign="top">
@@ -31,8 +31,8 @@ $display_admin .= '
         <img src="'.DIR_GRAPHICS.'kcron.png" width="32" height="32" align="left" hspace="2" alt="Delivery Cycle Functions"><br>
         <b>Delivery Cycle Functions</b>
         <ul class="fancyList1">
-          <li><a href="orders_list_withtotals.php?delivery_id='.ActiveCycle::delivery_id().'">Members with orders this cycle (with totals)</a></li>
-          <li class="last_of_group"><a href="members_list_emailorders.php?delivery_id='.ActiveCycle::delivery_id().'">Customer Email Addresses this cycle</a></li>
+          <li><a href="orders_list_withtotals.php?delivery_id='.$active_cycle->delivery_id().'">Members with orders this cycle (with totals)</a></li>
+          <li class="last_of_group"><a href="members_list_emailorders.php?delivery_id='.$active_cycle->delivery_id().'">Customer Email Addresses this cycle</a></li>
         </ul>
       </td>
     </tr>

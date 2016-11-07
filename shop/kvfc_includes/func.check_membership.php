@@ -99,10 +99,9 @@ function check_membership_renewal ($membership_info)
           SELECT
             delivery_id,
             delivery_date
-          FROM
-            '.TABLE_ORDER_CYCLES.'
-          WHERE
-            delivery_date >= "'.mysql_real_escape_string ($membership_info['last_renewal_date']).'"
+          FROM '.TABLE_ORDER_CYCLES.'
+          WHERE is_bulk = 0
+            AND delivery_date >= "'.mysql_real_escape_string ($membership_info['last_renewal_date']).'"
             AND delivery_date < CURDATE()';
         $result = mysql_query($query, $connection) or die(debug_print ("ERROR: 780322 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
         $grace_count = 0;
@@ -163,15 +162,13 @@ function check_membership_renewal ($membership_info)
           SELECT
             delivery_id,
             delivery_date
-          FROM
-            '.NEW_TABLE_BASKETS.'
-          LEFT JOIN
-            '.TABLE_ORDER_CYCLES.' USING(delivery_id)
-          WHERE
-            '.NEW_TABLE_BASKETS.'.member_id = '.mysql_real_escape_string ($membership_info['member_id']).'
-            AND '.TABLE_ORDER_CYCLES.'.delivery_date >= "'.mysql_real_escape_string ($membership_info['last_renewal_date']).'"
-            AND '.TABLE_ORDER_CYCLES.'.delivery_date < CURDATE()
-            AND checked_out != 0'; // Does not include NULL (i.e not checked_out items)
+          FROM '.NEW_TABLE_BASKETS.'
+          LEFT JOIN '.TABLE_ORDER_CYCLES.' USING(delivery_id)
+          WHERE '.NEW_TABLE_BASKETS.'.member_id = '.mysql_real_escape_string ($membership_info['member_id']).'
+          AND '.TABLE_ORDER_CYCLES.'.is_bulk = 0
+          AND '.TABLE_ORDER_CYCLES.'.delivery_date >= "'.mysql_real_escape_string ($membership_info['last_renewal_date']).'"
+          AND '.TABLE_ORDER_CYCLES.'.delivery_date < CURDATE()
+          AND checked_out != 0'; // Does not include NULL (i.e not checked_out items)
         $result = mysql_query($query, $connection) or die(debug_print ("ERROR: 780322 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
         $grace_count = 0;
         $renewal_info['used_expiration_range'] = 0;

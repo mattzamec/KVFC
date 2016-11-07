@@ -99,7 +99,7 @@ if (! function_exists ('valid_auth'))
 // Handle debugging information
 if (! function_exists ('debug_print'))
   {
-    function debug_print ($text, $data, $target = NULL)
+    function debug_print ($text, $data = NULL, $target = NULL)
       {
         if (DEBUG_LOGGING == true)
           {
@@ -109,16 +109,9 @@ if (! function_exists ('debug_print'))
             else $color = '#000';
 
             $message = '
-              <pre style="color:'.$color.';">'.date('Y-m-d H:i:s',time()).' ['.$_SESSION['member_id'].']<br>'.$text.$target.'<br>'.print_r ($data, true).'</pre>';
+              <pre style="color:'.$color.';">'.date('Y-m-d H:i:s',time()).' ['.$_SESSION['member_id'].']<br>'.$text.$target.'<br>'.print_r($data, true).'</pre>';
             $destination = FILE_PATH.PATH.'errors.html';
             error_log ($message, 3, $destination);
-
-    //         $message = '
-    //           '.$text.$target.'
-    //           '.print_r ($data, true);
-    //         error_log ($message, 0);
-
-    //         echo $message;
           }
       }
   }
@@ -275,8 +268,8 @@ if (!function_exists('delivery_nav'))
         global $connection;
         $query = '
             SELECT 
-                EXISTS(SELECT 1 FROM ' . TABLE_ORDER_CYCLES . ' WHERE delivery_id = ' . ($delivery_id - 1) . ') AS `exists_prior`,
-                EXISTS(SELECT 1 FROM ' . TABLE_ORDER_CYCLES . ' WHERE delivery_id = ' . ($delivery_id + 1) . ') AS `exists_next`';
+                EXISTS(SELECT 1 FROM ' . TABLE_ORDER_CYCLES . ' WHERE is_bulk = 0 AND delivery_id < ' . $delivery_id . ') AS `exists_prior`,
+                EXISTS(SELECT 1 FROM ' . TABLE_ORDER_CYCLES . ' WHERE is_bulk = 0 AND delivery_id > ' . $delivery_id . ') AS `exists_next`';
 
         $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 864302 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
         if ($row = mysql_fetch_object($result)) {

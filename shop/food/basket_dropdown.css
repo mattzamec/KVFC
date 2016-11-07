@@ -8,12 +8,12 @@
   }
 /* Styles for the Basket Selector */
 #basket_dropdown {
-  position:absolute;
   border:1px solid #000;
-  float:left;
+  float:right;
   width:300px;
   height:26px;
   overflow:hidden;
+  margin: 5px 5px 0px 0px;
   }
 #basket_dropdown:hover {
   height:400px;

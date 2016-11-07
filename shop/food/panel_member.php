@@ -19,69 +19,49 @@ if ($_POST['update_membership'] == 'true')
     $_POST['update_membership'] = 'false';
   }
 
-// Set up English grammar for ordering dates
+$active_cycle = new ActiveCycle();
+$next_cycle = new NextCycle();
 
+// Set up English grammar for ordering dates
 $relative_text = '';
 $close_suffix = '';
 $open_suffix = '';
 
-if ( strtotime (ActiveCycle::date_open_next()) < time ()  && strtotime (ActiveCycle::date_closed_next()) > time ())
-  {
+if (strtotime($next_cycle->date_open()) < time() && strtotime($next_cycle->date_closed()) > time())
+{
     $relative_text = 'Current&nbsp;';
-  }
-elseif ( strtotime (ActiveCycle::date_closed_next()) > time () )
-  {
+}
+elseif (strtotime($next_cycle->date_closed()) > time())
+{
     $relative_text = 'Next&nbsp;';
-  }
-else // strtotime (ActiveCycle::delivery_date_next()) < time ()
-  {
+}
+else // strtotime ($next_cycle->delivery_date()) < time ()
+{
     $relative_text = 'Prior&nbsp;';
-  }
+}
 
-if ( strtotime (ActiveCycle::date_open_next()) < time () )
-  {
-    $open_suffix = 'ed'; // Open[ed]
-  }
-else
-  {
-    $open_suffix = 's'; // Open[s]
-  }
-
-if ( strtotime (ActiveCycle::date_closed_next()) < time () )
-  {
-    $close_suffix = 'd'; // Close[d]
-  }
-else
-  {
-    $close_suffix = 's'; // Close[s]
-  }
-
-// echo "<pre>".print_r($_SESSION,true)."</pre>";
+$open_suffix = strtotime($next_cycle->date_open()) < time() ? 'ed' : 's';
+$close_suffix = strtotime($next_cycle->date_closed()) < time() ? 'd' : 's';
 
 // Get basket status information
 $query = '
   SELECT
-    COUNT(product_id) AS basket_quantity,
+    SUM(quantity) AS basket_quantity,
     '.NEW_TABLE_BASKETS.'.basket_id
-  FROM
-    '.NEW_TABLE_BASKETS.'
+  FROM '.NEW_TABLE_BASKETS.'
   LEFT JOIN '.NEW_TABLE_BASKET_ITEMS.' ON '.NEW_TABLE_BASKETS.'.basket_id = '.NEW_TABLE_BASKET_ITEMS.'.basket_id
-  WHERE
-    '.NEW_TABLE_BASKETS.'.member_id = "'.mysql_real_escape_string ($_SESSION['member_id']).'"
-    AND '.NEW_TABLE_BASKETS.'.delivery_id = '.mysql_real_escape_string (ActiveCycle::delivery_id()).'
-  GROUP BY
-    '.NEW_TABLE_BASKETS.'.member_id';
+  WHERE '.NEW_TABLE_BASKETS.'.member_id = "'.mysql_real_escape_string ($_SESSION['member_id']).'"
+  AND '.NEW_TABLE_BASKETS.'.delivery_id = '.mysql_real_escape_string ($active_cycle->delivery_id()).'
+  GROUP BY '.NEW_TABLE_BASKETS.'.member_id';
 $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 670342 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
 $basket_quantity = 0;
 if ($row = mysql_fetch_object($result))
-  {
+{
     $basket_quantity = $row->basket_quantity;
     $basket_id = $row->basket_id;
-  }
+}
 
 /////////////// FINISH PRE-PROCESSING AND BEGIN PAGE GENERATION /////////////////
-
-
 
 // Generate the display output
 $display .= '
@@ -91,9 +71,9 @@ $display .= '
     <img src="'.DIR_GRAPHICS.'current.png" width="32" height="32" align="left" hspace="2" alt="Order"><br>
     <strong>'.$relative_text.'Order</strong>
         <ul class="fancyList1">
-          <li><strong>Open'.$open_suffix.':</strong>&nbsp;'.date ('M&\n\b\s\p;j,&\n\b\s\p;g:i&\n\b\s\p;A&\n\b\s\p;(T)', strtotime (ActiveCycle::date_open_next())).'</li>
-          <li><strong>Close'.$close_suffix.':</strong>&nbsp;'.date ('M&\n\b\s\p;j,&\n\b\s\p;g:i&\n\b\s\p;A&\n\b\s\p;(T)', strtotime (ActiveCycle::date_closed_next())).'</li>
-          <li class="last_of_group"><strong>Delivery:</strong>&nbsp;'.date ('F&\n\b\s\p;j', strtotime (ActiveCycle::delivery_date_next())).'</li>
+          <li><strong>Open'.$open_suffix.':</strong>&nbsp;'.date ('M&\n\b\s\p;j,&\n\b\s\p;g:i&\n\b\s\p;A&\n\b\s\p;(T)', strtotime($next_cycle->date_open())).'</li>
+          <li><strong>Close'.$close_suffix.':</strong>&nbsp;'.date ('M&\n\b\s\p;j,&\n\b\s\p;g:i&\n\b\s\p;A&\n\b\s\p;(T)', strtotime($next_cycle->date_closed())).'</li>
+          <li class="last_of_group"><strong>Delivery:</strong>&nbsp;'.date ('F&\n\b\s\p;j', strtotime($next_cycle->delivery_date())).'</li>
         </ul>
 <!--
     <img src="'.DIR_GRAPHICS.'shopping.png" width="32" height="32" align="left" hspace="2" alt="Basket Status"><br>

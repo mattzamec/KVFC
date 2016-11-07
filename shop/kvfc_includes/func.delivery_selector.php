@@ -15,12 +15,10 @@ function delivery_selector ($current_delivery_id)
         date_closed,
         order_fill_deadline,
         delivery_date
-      FROM
-        '.TABLE_ORDER_CYCLES.'
-      WHERE
-        date_open < NOW()
-      ORDER BY
-        delivery_date DESC';
+      FROM '.TABLE_ORDER_CYCLES.'
+      WHERE is_bulk = 0 
+      AND date_open < NOW()
+      ORDER BY delivery_date DESC';
     $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 898034 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
     WHILE ($row = mysql_fetch_array($result))
       {

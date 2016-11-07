@@ -301,6 +301,8 @@ $query = '
   SET SQL_BIG_SELECTS=1';
 $result = @mysql_query($query, $connection) or die('<br><br>You found a bug. If there is an error listed below, please copy and paste the error into an email to <a href="mailto:'.WEBMASTER_EMAIL.'">'.WEBMASTER_EMAIL.'</a><br><br><b>Error:</b> Selecting message ' . mysql_error() . '<br><b>Error No: </b>' . mysql_errno());
 
+$next_delivery_id = (new NextDelivery())->delivery_id();
+
 // Display current repeat-scheduled products
 $query = '
   SELECT
@@ -309,21 +311,14 @@ $query = '
     '.TABLE_PRODUCT.'.detailed_notes,
     '.TABLE_ORDER_CYCLES.'.delivery_date,
     COUNT(member_id) AS quantity
-  FROM
-    '.TABLE_REPEAT_ORDERS.'
-  LEFT JOIN
-    '.TABLE_PRODUCT.' ON '.TABLE_REPEAT_ORDERS.'.product_id = '.TABLE_PRODUCT.'.product_id
-  LEFT JOIN
-    '.TABLE_BASKET.' ON '.TABLE_REPEAT_ORDERS.'.product_id = '.TABLE_BASKET.'.product_id
-  LEFT JOIN
-    '.TABLE_BASKET_ALL.' ON '.TABLE_BASKET.'.basket_id = '.TABLE_BASKET_ALL.'.basket_id
-  LEFT JOIN
-    '.TABLE_ORDER_CYCLES.' ON '.TABLE_ORDER_CYCLES.'.delivery_id = '.TABLE_REPEAT_ORDERS.'.order_last_added
-  WHERE
-    '.TABLE_BASKET_ALL.'.delivery_id >= '.mysql_real_escape_string (ActiveCycle::delivery_id_next()).' - repeat_cycles
-    AND '.TABLE_BASKET.'.item_price != 0
-  GROUP BY
-    '.TABLE_REPEAT_ORDERS.'.product_id';
+  FROM '.TABLE_REPEAT_ORDERS.'
+  LEFT JOIN '.TABLE_PRODUCT.' ON '.TABLE_REPEAT_ORDERS.'.product_id = '.TABLE_PRODUCT.'.product_id
+  LEFT JOIN '.TABLE_BASKET.' ON '.TABLE_REPEAT_ORDERS.'.product_id = '.TABLE_BASKET.'.product_id
+  LEFT JOIN '.TABLE_BASKET_ALL.' ON '.TABLE_BASKET.'.basket_id = '.TABLE_BASKET_ALL.'.basket_id
+  LEFT JOIN '.TABLE_ORDER_CYCLES.' ON '.TABLE_ORDER_CYCLES.'.delivery_id = '.TABLE_REPEAT_ORDERS.'.order_last_added
+  WHERE '.TABLE_BASKET_ALL.'.delivery_id >= '.mysql_real_escape_string ($next_delivery_id).' - repeat_cycles
+  AND '.TABLE_BASKET.'.item_price != 0
+  GROUP BY '.TABLE_REPEAT_ORDERS.'.product_id';
 $result = @mysql_query($query, $connection) or die('<br><br>You found a bug. If there is an error listed below, please copy and paste the error into an email to <a href="mailto:'.WEBMASTER_EMAIL.'">'.WEBMASTER_EMAIL.'</a><br><br><b>Error:</b> Selecting message ' . mysql_error() . '<br><b>Error No: </b>' . mysql_errno());
 $display .= '
   <table class="control" border="0" cellspacing="0" cellpadding="3" width="95%" align="center">
@@ -372,8 +367,8 @@ while ( $row = mysql_fetch_object($result) )
       <tr>
         <td align="left" style="border-bottom:1px solid #000;">
           <input type="hidden" name="repeat_id" value="'.$row->repeat_id.'">
-          <input type="hidden" name="new_order_last_added" value="'.ActiveCycle::delivery_id_next().'">
-          '.($row->order_last_added < ActiveCycle::delivery_id_next() ? '<input class="button" type="submit" name="action" value="Post orders"><br><br>' : '').'
+          <input type="hidden" name="new_order_last_added" value="'.$next_delivery_id.'">
+          '.($row->order_last_added < $next_delivery_id ? '<input class="button" type="submit" name="action" value="Post orders"><br><br>' : '').'
         </td>
         <td align="right" colspan="2" style="border-bottom:1px solid #000;">
           <input class="button" type="submit" name="action" value="Update settings"><br><br>

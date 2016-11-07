@@ -106,12 +106,11 @@ function ordering_unit_display_calc($data)
     : '');
   };
 
-
 // INVENTORY_DISPLAY_CALC
 function inventory_display_calc($data)
   { return
     ($data['inventory_id'] ?
-    '<span id="available'.$data['product_id'].'">'.($data['inventory_quantity'] == 0 ? '[OUT OF STOCK] 0 ' : $data['inventory_quantity']).'</span> '.Inflect::pluralize_if ($data['inventory_quantity'], $data['ordering_unit']).' available. '
+    '<span id="available'.$data['product_id'].'X'.$data['product_version'].'">'.($data['inventory_quantity'] == 0 ? '[OUT OF STOCK] 0 ' : $data['inventory_quantity']).'</span> '.Inflect::pluralize_if ($data['inventory_quantity'], $data['ordering_unit']).' available. '
     : '');
   };
 

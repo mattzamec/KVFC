@@ -1,4 +1,3 @@
-<style type="text/css">
 h3 {
   margin: 0px;
   padding: 0px;
@@ -32,7 +31,6 @@ li.del_incomplete, li.basket_incomplete {
   width:95%;
   margin:auto;
   }
-
 
 #left-column {
   float:left;
@@ -190,8 +188,6 @@ td.update_destination {
   padding:0;
   }
 
-
-
 .customerList li:hover {
   background-color: #ccc;
   color:#000;
@@ -231,7 +227,7 @@ td.update_destination {
 #basket_progress {
   margin-top:0;
   border-top:1px solid #000;
-  margin-bottom:10;
+  margin-bottom:10px;
   }
 
 #p_progress-left, #c_progress-left {
@@ -384,5 +380,3 @@ h1,h2 {
   text-decoration:underline;
   color:#008;
   }
-
-</style>

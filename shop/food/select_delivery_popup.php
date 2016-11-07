@@ -14,7 +14,7 @@ if ($_GET['first_call'] != 'true')
 $delivery_codes_list .= get_delivery_codes_list (array (
   'action' => $_GET['action'],
   'member_id' => $_SESSION['member_id'],
-  'delivery_id' => ActiveCycle::delivery_id(),
+  'delivery_id' => (new ActiveCycle())->delivery_id(),
   'site_id' => $_GET['site_id'],
   'delivery_type' => $_GET['delivery_type']
   ));

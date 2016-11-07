@@ -3,17 +3,16 @@ include_once 'config_openfood.php';
 session_start();
 valid_auth('orderex,site_admin');
 
+$active_cycle = new ActiveCycle();
 $message = "";
 if ( $_REQUEST['update'] == 'yes' )
   {
     $sqlu = '
-      UPDATE
-        '.TABLE_ORDER_CYCLES.'
+      UPDATE '.TABLE_ORDER_CYCLES.'
       SET
         msg_all = "'.mysql_real_escape_string ($_REQUEST['msg_all']).'",
         msg_bottom = "'.mysql_real_escape_string ($_REQUEST['msg_bottom']).'"
-      WHERE
-      delivery_id >= '.ActiveCycle::delivery_id();
+      WHERE delivery_id >= '.$active_cycle->delivery_id();
     $resultu = @mysql_query($sqlu, $connection) or die('<br><br>You found a bug. If there is an error listed below, please copy and paste the error into an email to <a href="mailto:'.WEBMASTER_EMAIL.'">'.WEBMASTER_EMAIL.'</a><br><br><b>Error:</b> Updating ' . mysql_error() . '<br><b>Error No: </b>' . mysql_errno());
     $message = ': <font color="#FFFFFF">Messages have been updated</font>';
   }
@@ -21,10 +20,8 @@ $sqlmsg = '
   SELECT msg_all,
     delivery_id,
     msg_bottom
-  FROM
-    '.TABLE_ORDER_CYCLES.'
-  WHERE
-    delivery_id = '.ActiveCycle::delivery_id();
+  FROM '.TABLE_ORDER_CYCLES.'
+  WHERE delivery_id = '.$active_cycle->delivery_id();
 $resultmsg = @mysql_query($sqlmsg, $connection) or die('<br><br>You found a bug. If there is an error listed below, please copy and paste the error into an email to <a href="mailto:'.WEBMASTER_EMAIL.'">'.WEBMASTER_EMAIL.'</a><br><br><b>Error:</b> Selecting message ' . mysql_error() . '<br><b>Error No: </b>' . mysql_errno());
 while ( $row = mysql_fetch_array($resultmsg) )
   {
@@ -34,7 +31,7 @@ while ( $row = mysql_fetch_array($resultmsg) )
 
 $content .= $font.'
   <h3>Editing Text on the Invoices</h3>
-  <p>This will change the message for the current invoice ('.date (DATE_FORMAT_CLOSED, strtotime (ActiveCycle::delivery_date())).') and all future invoices until changed.</p>
+  <p>This will change the message for the current invoice ('.date (DATE_FORMAT_CLOSED, strtotime ($active_cycle->delivery_date())).') and all future invoices until changed.</p>
   <table width="685" cellpadding="7" cellspacing="2" border="0">
     <tr bgcolor="#AE58DA">
       <td align="left"><b>Message to all Members '.$message.'</b></td>

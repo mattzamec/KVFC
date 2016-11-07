@@ -3,21 +3,16 @@ include_once ('func.get_baskets_list.php');
 valid_auth('member');
 
 // Set content_top to show basket selector...
-$content_top .= get_baskets_list ();
+$content_top .= get_baskets_list($show_bulk);
 
 // Do not show search on non-shopping pages
 $show_search = false;
 
-// $where_misc = '
-//     AND (
-//       '.NEW_TABLE_BASKET_ITEMS.'.basket_id = "'.mysql_real_escape_string($basket_id).'"
-//       OR (
-//         '.NEW_TABLE_BASKETS.'.member_id = "'.mysql_real_escape_string($member_id).'"
-//         AND '.NEW_TABLE_BASKETS.'.delivery_id = "'.mysql_real_escape_string($delivery_id).'"))';
 $where_misc = '
     (
-      '.NEW_TABLE_BASKETS.'.member_id = "'.mysql_real_escape_string($member_id).'"
-      AND '.NEW_TABLE_BASKETS.'.delivery_id = "'.mysql_real_escape_string($delivery_id).'")';
+        '.NEW_TABLE_BASKETS.'.member_id = '.mysql_real_escape_string($member_id).'
+        AND '.NEW_TABLE_BASKETS.'.delivery_id = '.mysql_real_escape_string($delivery_id).'
+    )';
 
 $order_by = '
     '.TABLE_CATEGORY.'.sort_order ASC,
@@ -90,8 +85,7 @@ $query = '
     FLOOR('.TABLE_INVENTORY.'.quantity / '.NEW_TABLE_PRODUCTS.'.inventory_pull) AS inventory_quantity,
     (SELECT GROUP_CONCAT(site_id) FROM '.TABLE_AVAILABILITY.' WHERE '.TABLE_AVAILABILITY.'.producer_id='.NEW_TABLE_PRODUCTS.'.producer_id) AS availability_list,
     '.NEW_TABLE_MESSAGES.'.message AS customer_message
-  FROM
-    '.NEW_TABLE_BASKETS.'
+  FROM '.NEW_TABLE_BASKETS.'
   LEFT JOIN '.NEW_TABLE_BASKET_ITEMS.' USING(basket_id)
   LEFT JOIN '.NEW_TABLE_PRODUCTS.' USING(product_id, product_version)
   LEFT JOIN '.TABLE_PRODUCER.' ON '.TABLE_PRODUCER.'.producer_id = '.NEW_TABLE_PRODUCTS.'.producer_id

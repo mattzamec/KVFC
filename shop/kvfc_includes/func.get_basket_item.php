@@ -1,11 +1,10 @@
 <?php
 // If a basket_item exists for this order, the subroutine returns useful information.
 // This can be accessed by calling with:    get_basket_item ($bpid)
-//                                       OR get_basket_item ($basket_id, $product_id)
-//                                       OR get_basket_item ($member_id, $product_id, $delivery_id)
-// product_version is not needed: there better be only one version in the basket at a time
-function get_basket_item ($argument1, $product_id = NULL, $delivery_id = NULL)
-  {
+//                                       OR get_basket_item ($basket_id, $product_id, $product_version)
+//                                       OR get_basket_item ($member_id, $product_id, $product_version, $delivery_id)
+function get_basket_item($argument1, $product_id = NULL, $product_version = NULL, $delivery_id = NULL)
+{
     global $connection;
     $selected_fields = array (
       // Expose additional parameters as they become needed.
@@ -21,8 +20,6 @@ function get_basket_item ($argument1, $product_id = NULL, $delivery_id = NULL)
       NEW_TABLE_BASKET_ITEMS.'.producer_fee_percent',
       'taxable',
       'out_of_stock',
-      // 'future_delivery',
-      // 'future_delivery_type',
       'date_added',
       // COLUMNS FROM PRODUCTS ------------------------------------
       // 'xid',
@@ -60,44 +57,42 @@ function get_basket_item ($argument1, $product_id = NULL, $delivery_id = NULL)
       'checked_out',
       // COLUMNS FROM MESSAGES ------------------------------------
       'message',
-      );
+    );
 
-    if (is_numeric ($argument1) && is_numeric ($product_id) && is_numeric ($delivery_id))
-      {
+    if (is_numeric($argument1) && is_numeric($product_id) && is_numeric($product_version) && is_numeric($delivery_id))
+    {
+        // This is not used and is untested
         $query_where = 'RIGHT JOIN '.NEW_TABLE_BASKETS.' USING (basket_id)
-        WHERE
-          member_id = "'.mysql_real_escape_string ($argument1).'"
-          AND product_id = "'.mysql_real_escape_string ($product_id).'"
-          AND delivery_id = "'.mysql_real_escape_string ($delivery_id).'"';
-      }
-    elseif (is_numeric ($argument1) && is_numeric ($product_id))
-      {
-        $query_where = 'WHERE
-          basket_id = "'.mysql_real_escape_string ($argument1).'"
-          AND product_id = "'.mysql_real_escape_string ($product_id).'"';
-      }
+        WHERE member_id = "'.mysql_real_escape_string($argument1).'"
+        AND product_id = "'.mysql_real_escape_string($product_id).'"
+        AND delivery_id = "'.mysql_real_escape_string($delivery_id).'"';
+    }
+    elseif (is_numeric($argument1) && is_numeric($product_id) &&is_numeric($product_version))
+    {
+        $query_where = 'WHERE basket_id = '.mysql_real_escape_string($argument1).'
+        AND product_id = '.mysql_real_escape_string($product_id).'
+        AND product_version = '.mysql_real_escape_string($product_version);
+    }
     elseif (is_numeric ($argument1))
-      {
-        $query_where = 'WHERE
-          bpid = "'.mysql_real_escape_string ($argument1).'"';
-      }
+    {
+        $query_where = 'WHERE bpid = '.mysql_real_escape_string($argument1);
+    }
     else
-      {
+    {
         die(debug_print('ERROR: 101 ', 'unexpected request', basename(__FILE__).' LINE '.__LINE__));
-      }
+    }
     $query = '
       SELECT
         '.implode (",\n        ", $selected_fields).'
       FROM '.NEW_TABLE_BASKET_ITEMS.'
-      LEFT JOIN '.NEW_TABLE_PRODUCTS.' USING(product_id,product_version)
+      LEFT JOIN '.NEW_TABLE_PRODUCTS.' USING(product_id, product_version)
       LEFT JOIN '.NEW_TABLE_MESSAGES.' ON
         ('.NEW_TABLE_MESSAGES.'.message_type_id = 1
         AND '.NEW_TABLE_BASKET_ITEMS.'.bpid = '.NEW_TABLE_MESSAGES.'.referenced_key1)
       '.$query_where;
     $result = mysql_query($query, $connection) or die(debug_print ("ERROR: 799031 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
     if ($row = mysql_fetch_array($result))
-      {
+    {
         return ($row);
-      }
-  }
-?>
+    }
+}

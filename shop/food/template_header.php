@@ -19,18 +19,25 @@ $login_menu = '';
 $header_title = '';
 
 // Set $google_analytics
-if (strlen (GOOGLE_ANALYTICS_TRACKING_ID) > 0)
-  include_once (FILE_PATH.PATH.'template_analyticstracking.php');
+if (strlen(GOOGLE_ANALYTICS_TRACKING_ID) > 0)
+{
+    include_once (FILE_PATH.PATH.'template_analyticstracking.php');
+}
 
 // Set $favicon
 if (FAVICON != '')
-  $favicon = '
+{
+    $favicon = '
     <link rel="shortcut icon" href="'.FAVICON.'" type="image/x-icon">';
+}
 if (SHOW_HEADER_LOGO)
-  $header_title .= '<img id="header_logo" src="'.DIR_GRAPHICS.'logo.jpg" border="0" alt="'.SITE_NAME.'">';
+{
+    $header_title .= '<img id="header_logo" src="'.DIR_GRAPHICS.'logo.jpg" border="0" alt="'.SITE_NAME.'">';
+}
 if (SHOW_HEADER_SITENAME)
-  $header_title .= '<h1 id="header_site_name">'.SITE_NAME.'</h1>';
-
+{
+    $header_title .= '<h1 id="header_site_name">'.SITE_NAME.'</h1>';
+}
 
 // // Site down processing -- not yet implemented
 // $site_is_down = false;
@@ -45,35 +52,57 @@ if (SHOW_HEADER_SITENAME)
 // if (time() > strtotime($site_down_at_time) && time() < strtotime($site_down_at_time) + $down_time_duration) $site_is_down = true;
 // if (time() > strtotime($site_down_at_time) - $down_time_warning && time() < strtotime($site_down_at_time) + $down_time_duration) $warn_now = true;
 
+$active_cycle = new ActiveCycle();
+$active_bulk_cycle = new ActiveBulkCycle();
+    
 // Check if the member is logged in
 if ($_SESSION['member_id'])
   {
     // Get basket information, but don't re-query if we already have it
-    if (! isset ($basket_quantity) && ActiveCycle::delivery_id())
-      {
+    if (!isset ($basket_quantity) && $active_cycle->delivery_id() > 0)
+    {
         $query = '
-          SELECT
-            COUNT(product_id) AS basket_quantity,
+          SELECT 
+            SUM(quantity) AS basket_quantity,
             '.NEW_TABLE_BASKET_ITEMS.'.basket_id
-          FROM
-            '.NEW_TABLE_BASKET_ITEMS.'
+          FROM '.NEW_TABLE_BASKET_ITEMS.'
           LEFT JOIN '.NEW_TABLE_BASKETS.' ON '.NEW_TABLE_BASKETS.'.basket_id = '.NEW_TABLE_BASKET_ITEMS.'.basket_id
-          WHERE
-            '.NEW_TABLE_BASKETS.'.member_id = "'.mysql_real_escape_string ($_SESSION['member_id']).'"
-            AND '.NEW_TABLE_BASKETS.'.delivery_id = '.mysql_real_escape_string (ActiveCycle::delivery_id()).'
-          GROUP BY
-            '.NEW_TABLE_BASKETS.'.member_id';
+          WHERE '.NEW_TABLE_BASKETS.'.member_id = "'.mysql_real_escape_string ($_SESSION['member_id']).'"
+          AND '.NEW_TABLE_BASKETS.'.delivery_id = '.mysql_real_escape_string ($active_cycle->delivery_id()).'
+          GROUP BY '.NEW_TABLE_BASKETS.'.basket_id
+          LIMIT 1';
         $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 780934 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
         $basket_quantity = 0;
         if ($row = mysql_fetch_object($result))
-          {
+        {
             $basket_quantity = $row->basket_quantity;
             $basket_id = $row->basket_id;
-          }
-      }
+        }
+    }
+    // Get bulk basket information, but don't re-query if we already have it
+    if (!isset ($bulk_basket_quantity) && $active_bulk_cycle->delivery_id() > 0)
+    {
+        $query = '
+          SELECT 
+            SUM(quantity)  AS basket_quantity,
+            '.NEW_TABLE_BASKET_ITEMS.'.basket_id
+          FROM '.NEW_TABLE_BASKET_ITEMS.'
+          LEFT JOIN '.NEW_TABLE_BASKETS.' ON '.NEW_TABLE_BASKETS.'.basket_id = '.NEW_TABLE_BASKET_ITEMS.'.basket_id
+          WHERE '.NEW_TABLE_BASKETS.'.member_id = "'.mysql_real_escape_string($_SESSION['member_id']).'"
+          AND '.NEW_TABLE_BASKETS.'.delivery_id = '.mysql_real_escape_string($active_bulk_cycle->delivery_id()).'
+          GROUP BY '.NEW_TABLE_BASKETS.'.basket_id
+          LIMIT 1';
+        $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 780934 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
+        $bulk_basket_quantity = 0;
+        if ($row = mysql_fetch_object($result))
+        {
+            $bulk_basket_quantity = $row->basket_quantity;
+            $bulk_basket_id = $row->basket_id;
+        }
+    }
     // Check if this is a forced update or if it is member-requested
     if ($_SESSION['renewal_info']['membership_expired'] && $update_membership_page != true)
-      {
+    {
         $popup_renew_membership .= '
           <script type="text/javascript">
             jQuery(document).ready(function() {
@@ -82,12 +111,10 @@ if ($_SESSION['member_id'])
           </script>';
         $page_specific_css .= '
           <link rel="stylesheet" id="membership_renewal_styles" href="'.PATH.'membership_renewal.css" type="text/css" media="all" />';
-      }
+    }
     // Handle the MOTD inclusion
-    elseif (MOTD_REPEAT_TIME >= 0 &&
-            strlen (MOTD_CONTENT) > 0 &&
-            ! ofs_get_status ('motd_viewed', $_SESSION['member_id']))
-      {
+    elseif (MOTD_REPEAT_TIME >= 0 && strlen (MOTD_CONTENT) > 0 && !ofs_get_status('motd_viewed', $_SESSION['member_id']))
+    {
         $popup_motd .= '
           <script type="text/javascript">
             jQuery(document).ready(function() {
@@ -96,76 +123,101 @@ if ($_SESSION['member_id'])
           </script>';
         $page_specific_css .= '
           <link rel="stylesheet" id="motd_styles"  href="'.PATH.'motd.css" type="text/css" media="all" />';
-      }
+    }
+
     // Set up the page tabs
-    if (CurrentMember::auth_type('member'))
-      $panel_member_menu = '
+    if(CurrentMember::auth_type('member'))
+    {
+        $panel_member_menu = '
         <div class="tab_frame">
           <a href="'.PATH.'panel_member.php" class="'.($page_tab == 'member_panel' ? ' current_tab' : '').'">Member Panel</a>
         </div>';
-    if (CurrentMember::auth_type('member'))
-      $panel_shopping_menu = '
+    }
+    if(CurrentMember::auth_type('member'))
+    {
+        $panel_shopping_menu = '
         <div class="tab_frame">
           <a href="'.PATH.'panel_shopping.php" class="'.($page_tab == 'shopping_panel' ? ' current_tab' : '').'">Shopping</a>
         </div>';
-    if (CurrentMember::auth_type('producer'))
-      $panel_producer_menu = '
+    }
+    if(CurrentMember::auth_type('producer'))
+    {
+        $panel_producer_menu = '
         <div class="tab_frame">
           <a href="'.PATH.'panel_producer.php" class="'.($page_tab == 'producer_panel' ? ' current_tab' : '').'">Producer Panel</a>
         </div>';
-    if (CurrentMember::auth_type('route_admin'))
-      $panel_route_admin_menu = '
+    }
+    if(CurrentMember::auth_type('route_admin'))
+    {
+        $panel_route_admin_menu = '
         <div class="tab_frame">
           <a href="'.PATH.'panel_route_admin.php" class="'.($page_tab == 'route_admin_panel' ? ' current_tab' : '').'">Route Admin</a>
         </div>';
-    if (CurrentMember::auth_type('producer_admin'))
-      $panel_producer_admin_menu = '
+    }
+    if(CurrentMember::auth_type('producer_admin'))
+    {
+        $panel_producer_admin_menu = '
         <div class="tab_frame">
           <a href="'.PATH.'panel_producer_admin.php" class="'.($page_tab == 'producer_admin_panel' ? ' current_tab' : '').'">Producer Admin</a>
         </div>';
-    if (CurrentMember::auth_type('member_admin'))
-      $panel_member_admin_menu = '
+    }
+    if(CurrentMember::auth_type('member_admin'))
+    {
+        $panel_member_admin_menu = '
         <div class="tab_frame">
           <a href="'.PATH.'panel_member_admin.php" class="'.($page_tab == 'member_admin_panel' ? ' current_tab' : '').'">Member Admin</a>
         </div>';
-    if (CurrentMember::auth_type('cashier'))
-      $panel_cashier_menu = '
+    }
+    if(CurrentMember::auth_type('cashier'))
+    {
+        $panel_cashier_menu = '
         <div class="tab_frame">
           <a href="'.PATH.'panel_cashier.php" class="'.($page_tab == 'cashier_panel' ? ' current_tab' : '').'">Cashiers</a>
         </div>';
-    if (CurrentMember::auth_type('orderex'))
-      $panel_order_admin_menu = '
+    }
+    if(CurrentMember::auth_type('orderex, bulk_admin'))
+    {
+        $panel_order_admin_menu = '
         <div class="tab_frame">
           <a href="'.PATH.'panel_order_admin.php" class="'.($page_tab == 'order_admin_panel' ? ' current_tab' : '').'">Order Admin</a>
         </div>';
-    if (CurrentMember::auth_type('site_admin'))
-      $panel_site_admin_menu = '
+    }
+    if(CurrentMember::auth_type('site_admin'))
+    {
+        $panel_site_admin_menu = '
         <div class="tab_frame">
           <a href="'.PATH.'panel_site_admin.php" class="'.($page_tab == 'site_admin_panel' ? ' current_tab' : '').'">Site Admin</a>
         </div>';
+    }
     $logout_menu = '
         <div class="tab_frame right">
           <a href="'.PATH.'index.php?action=logout" class="'.($page_tab == 'login' ? ' current_tab' : '').'">Logout</a>
         </div>';
-    if (isset ($basket_id) && $basket_id != 0)
-      {
-        if (CurrentMember::auth_type('orderex') || ( ActiveCycle::ordering_window() == 'open'))
-          {
-            $basket_menu = '
+    if (isset($bulk_basket_quantity) && $bulk_basket_quantity > 0 &&
+        (CurrentMember::auth_type('orderex', 'bulk_admin') || $active_bulk_cycle->is_open_for_ordering()))
+    {
+        $basket_menu .= '
         <div class="tab_frame right">
-          <a href="'.PATH.'product_list.php?type=basket" class="">View Basket [<span id="header_basket_quantity">'.$basket_quantity.' '.Inflect::pluralize_if($basket_quantity, 'item').'</span>]</a>
+          <a href="'.PATH.'product_list.php?type=basket&show_bulk=1">View Bulk Basket [<span id="header_basket_quantity_bulk">'.$bulk_basket_quantity.' '.Inflect::pluralize_if($bulk_basket_quantity, 'item').'</span>]</a>
         </div>';
-          }
-      }
-  }
+    }
+    if (isset($basket_quantity) && $basket_quantity > 0 &&
+        (CurrentMember::auth_type('orderex') || $active_cycle->is_open_for_ordering()))
+    {
+        $basket_menu .= '
+        <div class="tab_frame right">
+          <a href="'.PATH.'product_list.php?type=basket">View Basket [<span id="header_basket_quantity">'.$basket_quantity.' '.Inflect::pluralize_if($basket_quantity, 'item').'</span>]</a>
+        </div>';
+    }
+}
 // If they're not logged in, then they will have a login link
 elseif ($page_tab != 'nologin')
-  {
+{
     $login_menu = '
-        <div class="tab_frame right">
+        <div class="tab_frame">
           <a href="'.PATH.'index.php?action=login" class="'.($page_tab == 'login' ? ' current_tab' : '').'">Login</a>
         </div>';
-  }
+}
 // Put it all together now
 
 ////////////////////////////////////////////////////////////////////////////////

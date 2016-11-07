@@ -50,6 +50,8 @@ namespace OmSkimmer
 
         #endregion Properties
 
+        #region Constructor
+
         public OmProductDetail()
         {
             this.purchasable = false;
@@ -65,8 +67,6 @@ namespace OmSkimmer
             this.unformattedRrp = 0.00m;
             this.priceLabel = String.Empty;
         }
-
-        #region Constructor
 
         #endregion Constructor
     }

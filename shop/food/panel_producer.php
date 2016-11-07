@@ -212,6 +212,7 @@ $display .= '
       <td align="left" width="50%">';
 if ($_SESSION['producer_id_you'])
   {
+    $delivery_id = (new ActiveCycle())->delivery_id();
     $display .= '
         <img src="'.DIR_GRAPHICS.'labels.png" width="32" height="32" align="left" hspace="2" alt="Delivery Day Functions"><br>
         <b>'.$active_business_name.' Delivery Day Functions</b>
@@ -230,8 +231,8 @@ if ($_SESSION['producer_id_you'])
             <li><a href="order_summary.php">Order Summary</a></li>
             <li><a href="show_report.php?type=producer_invoice">Producer Invoice</a></li>
             <li class="last_of_group"><a href="past_producer_invoices.php?producer_id='.$_SESSION['producer_id_you'].'">Past Producer Invoices</a></li>
-            <li><a href="route_list.php?delivery_id='.ActiveCycle::delivery_id().'&type=pickup&producer_id='.$_SESSION['producer_id_you'].'">Routing Checklist (by customer)</a></li>
-            <li class="last_of_group"><a href="route_list.php?delivery_id='.ActiveCycle::delivery_id().'&type=dropoff&producer_id='.$_SESSION['producer_id_you'].'">Routing Checklist (by destination)</a></li>
+            <li><a href="route_list.php?delivery_id='.$delivery_id.'&type=pickup&producer_id='.$_SESSION['producer_id_you'].'">Routing Checklist (by customer)</a></li>
+            <li class="last_of_group"><a href="route_list.php?delivery_id='.$delivery_id.'&type=dropoff&producer_id='.$_SESSION['producer_id_you'].'">Routing Checklist (by destination)</a></li>
 
           </ul>
           <img src="'.DIR_GRAPHICS.'product.png" width="32" height="32" align="left" hspace="2" alt="Edit your products"><br>

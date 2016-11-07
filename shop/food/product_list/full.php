@@ -6,27 +6,33 @@
 $show_search = true;
 
 // The where_catsubcat constraints are only used in the type='new' option (called from category_list2.php)
-if ($_GET['subcat_id']) $where_catsubcat = '
-    AND '.NEW_TABLE_PRODUCTS.'.subcategory_id = '.mysql_real_escape_string ($_REQUEST['subcat_id']);
-if ($_GET['category_id']) $where_catsubcat = '
+if($_GET['subcat_id'])
+{
+    $where_catsubcat = '
+    AND '.NEW_TABLE_PRODUCTS.'.subcategory_id = '.mysql_real_escape_string($_REQUEST['subcat_id']);
+}
+if($_GET['category_id'])
+{
+    $where_catsubcat = '
     AND (
-      '.TABLE_CATEGORY.'.category_id = '.mysql_real_escape_string ($_GET['category_id']).'
+      '.TABLE_CATEGORY.'.category_id = '.mysql_real_escape_string($_GET['category_id']).'
       OR
-      '.TABLE_CATEGORY.'.parent_id = '.mysql_real_escape_string ($_GET['category_id']).'
+      '.TABLE_CATEGORY.'.parent_id = '.mysql_real_escape_string($_GET['category_id']).'
       )';
+}
 
 if (isset ($_SESSION['member_id']))
-  {
+{
     $where_auth = '
     AND '.TABLE_MEMBER.'.member_id = "'.mysql_real_escape_string ($_SESSION['member_id']).'"
     AND FIND_IN_SET(listing_auth_type, auth_type) > 0';
-  }
+}
 else
-  {
+{
     // Cases where there is no member_id (someone who is not logged in) use just "member" auth
     $where_auth = '
     AND FIND_IN_SET(listing_auth_type, "member") > 0';
-  }
+}
 
 $order_by = '
     '.TABLE_CATEGORY.'.sort_order ASC,
@@ -43,20 +49,20 @@ $page_tab = 'shopping_panel';
 
 // Assign template file
 if ($_GET['output'] == 'csv')
-  {
+{
     $per_page = 1000000;
     $template_type = 'customer_list_csv';
-  }
+}
 elseif ($_GET['output'] == 'pdf')
-  {
+{
     $per_page = 1000000;
     $template_type = 'customer_list_pdf';
-  }
+}
 else
-  {
+{
     $per_page = PER_PAGE;
     $template_type = 'customer_list';
-  }
+}
 
 // Set display groupings
 $major_division = 'category_name';
@@ -123,7 +129,7 @@ $query = '
   LEFT JOIN '.TABLE_PRODUCT_STORAGE_TYPES.' ON '.NEW_TABLE_PRODUCTS.'.storage_id = '.TABLE_PRODUCT_STORAGE_TYPES.'.storage_id
   LEFT JOIN '.NEW_TABLE_BASKET_ITEMS.' ON
     ('.NEW_TABLE_BASKET_ITEMS.'.product_id = '.NEW_TABLE_PRODUCTS.'.product_id
-    AND '.NEW_TABLE_BASKET_ITEMS.'.basket_id = "'.mysql_real_escape_string (CurrentBasket::basket_id()).'"
+    AND '.NEW_TABLE_BASKET_ITEMS.'.basket_id = "'.mysql_real_escape_string((new CurrentBasket())->basket_id()).'"
     AND '.NEW_TABLE_BASKET_ITEMS.'.basket_id > 0)
   LEFT JOIN '.NEW_TABLE_MESSAGES.' ON (referenced_key1 = bpid AND message_type_id =
     (SELECT message_type_id FROM '.NEW_TABLE_MESSAGE_TYPES.' WHERE description = "customer notes to producer"))
@@ -133,8 +139,8 @@ $query = '
     $where_catsubcat.
     $where_zero_inventory.
     $where_confirmed.
+    $where_bulk.
     $where_auth.'
   GROUP BY CONCAT('.NEW_TABLE_PRODUCTS.'.product_id, "-", '.NEW_TABLE_PRODUCTS.'.product_version)
   ORDER BY'.
     $order_by;
-?>

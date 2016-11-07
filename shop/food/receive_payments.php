@@ -6,10 +6,7 @@ valid_auth('route_admin,member_admin,cashier,site_admin');
 include ('func.delivery_selector.php');
 
 // Set up the default delivery cycle
-$delivery_id = ActiveCycle::delivery_id();
-// ... but if a targeted delivery is requested then use that.
-if (isset ($_GET['delivery_id']))
-  $delivery_id = $_GET['delivery_id'];
+$delivery_id = isset($_GET['delivery_id']) ? $_GET['delivery_id'] : (new ActiveCycle())->delivery_id();
 
 // Set the sort order
 if (isset ($_GET['order']))

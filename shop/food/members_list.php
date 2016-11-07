@@ -4,7 +4,7 @@ session_start();
 valid_auth('member_admin');
 
 
-$delivery_id = ActiveCycle::delivery_id();
+$delivery_id = (new ActiveCycle())->delivery_id();
 $sql = '
   SELECT
     '.TABLE_MEMBER.'.*,

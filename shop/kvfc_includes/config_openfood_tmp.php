@@ -23,7 +23,7 @@ $database_config = array (
   );
 
 // Include override values, but only if the file exists
-@include_once ("config_override.php"); 
+include_once ("config_override.php"); 
 
 // Establish database connection
 connect_to_database ($database_config);
@@ -40,7 +40,11 @@ ini_set('display_errors', DEBUG);
 
 // Set error reporting level
 // Convert the comma-separated ERROR_FLAGS into boolean constants and bitwise-or them together
-if (!is_int (ERROR_FLAGS)) $error_flags = array_reduce (array_map ('constant', explode (',', ERROR_FLAGS)), function($a, $b) {return $a | $b;}, 0);
+if(!is_int(ERROR_FLAGS))
+{
+    $error_flags = array_reduce(array_map('constant', explode(',', ERROR_FLAGS)), function($a, $b) {
+        return $a | $b;
+    }, 0);
+}
 error_reporting ($error_flags);
 
-?>

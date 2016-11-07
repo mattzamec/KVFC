@@ -1,14 +1,9 @@
 <?php
 include_once 'config_openfood.php';
 
-// include_once ('func.get_basket_item.php');
 include_once ('func.get_basket.php');
-// include_once ('func.get_member.php');
-// include_once ('func.get_producer.php');
-// include_once ('func.get_product.php');
 include_once ('func.update_ledger.php');
 include_once ('func.update_basket_item.php');
-// include_once ('func.open_basket.php');
 
 session_start();
 //valid_auth('cashier,site_admin');
@@ -102,13 +97,10 @@ $admin_override = true;
           }
       }
     // Check if shopping is closed for this order
-    if ($test_customer_ordering_window && ! $admin_override)
-      {
-        if (ActiveCycle::ordering_window() == 'closed')
-          {
-            die(debug_print('ERROR: 823186 ', 'customer ordering period is not in effect', basename(__FILE__).' LINE '.__LINE__));
-          }
-      }
+    if ($test_customer_ordering_window && ! $admin_override && !(new ActiveCycle())->is_open_for_ordering())
+    {
+        die(debug_print('ERROR: 823186 ', 'customer ordering period is not in effect', basename(__FILE__).' LINE '.__LINE__));
+    }
     // Update the basket with a new site and information related to the new site
     if ($update_site)
       {
@@ -193,10 +185,6 @@ debug_print ("INFO: 892573 ", $query_update_basket, basename(__FILE__).' LINE '.
         // Sync the variable we just changed
         $basket_info['checked_out'] = $checked_out ;
 
-
-
-
-
         // If there is an order cost (fixed), then post it (or clear it if wrongly set).
         if ($basket_info['order_cost'] != 0 &&
             $basket_info['order_cost_type'] == 'fixed' &&
@@ -255,11 +243,6 @@ debug_print ("INFO: 892573 ", $query_update_basket, basename(__FILE__).' LINE '.
               'match_keys' => array ('source_type','source_key','target_type','target_key','text_key','basket_id')
               ));
           }
-
-
-
-
-
       }
     // For checkout, synchronize ledger entries to all basket_items
     if ($initiate_checkout_items || $synch_ledger_items)
@@ -391,4 +374,3 @@ debug_print ("INFO: 892573 ", $query_update_basket, basename(__FILE__).' LINE '.
     // Return the new (possibly changed) basket_info array
     return ($basket_info);
   }
-?>

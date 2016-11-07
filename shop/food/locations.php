@@ -123,7 +123,7 @@ $display_block .= '
 $page_title_html = '<span class="title">'.SITE_NAME.'</span>';
 $page_subtitle_html = '<span class="subtitle">Pickup and Delivery Locations</span>';
 $page_title = 'Pickup and Delivery Locations';
-$page_tab = '';
+$page_tab = 'member_panel';
 
 include("template_header.php");
 echo '

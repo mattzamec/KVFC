@@ -14,12 +14,9 @@ function generate_producer_summary ($producer_id, $delivery_id, $detail_type, $u
            $retail_markup,
            $wholesale_markup;
     $query = '
-      SELECT
-        *
-      FROM
-        '.TABLE_ORDER_CYCLES.'
-      WHERE
-        delivery_id = '.mysql_real_escape_string ($delivery_id);
+      SELECT delivery_date
+      FROM '.TABLE_ORDER_CYCLES.'
+      WHERE delivery_id = '.mysql_real_escape_string ($delivery_id);
     $result= mysql_query("$query") or die("Error: " . mysql_error());
     while ($row = mysql_fetch_array($result))
       {

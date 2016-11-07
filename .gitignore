@@ -1,3 +1,5 @@
 README.MD
 *.7z
 DB/
+/shop/sandbox.php
+/shop/nbproject/private/

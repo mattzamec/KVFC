@@ -158,4 +158,3 @@ function open_basket (array $data)
     $data['order_date'] = date("Y-m-d H:i:s"); // Approximate, since it did not come from the database
     return ($data);
   }
-?>

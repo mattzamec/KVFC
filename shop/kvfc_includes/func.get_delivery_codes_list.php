@@ -8,9 +8,10 @@ include_once ('func.get_basket.php');
 function get_delivery_codes_list ($request_data)
   {
     global $connection;
+    $active_cycle = new ActiveCycle();
     // See if it is okay to open a basket...
-    if (ActiveCycle::delivery_id() &&
-        ( ActiveCycle::ordering_window() == 'open' ||
+    if ($active_cycle->delivery_id() > 0 &&
+        ($active_cycle->is_open_for_ordering() ||
           CurrentMember::auth_type('orderex')))
 //        && ! CurrentBasket::basket_id())
       {
@@ -24,7 +25,7 @@ function get_delivery_codes_list ($request_data)
                 $delivery_type = $request_data['delivery_type'];
                 // First try an assigned delivery_id... then use the current active one
                 $delivery_id = $request_data['delivery_id'];
-                if (! $delivery_id) $delivery_id = ActiveCycle::delivery_id();
+                if (! $delivery_id) $delivery_id = $active_cycle->delivery_id();
                 // First try an assigned member_id... then use the current session one
                 $member_id = $request_data['member_id'];
                 if (! $member_id) $member_id = $_SESSION['member_id'];
@@ -182,7 +183,7 @@ function get_delivery_codes_list ($request_data)
                 $delivery_type_text_w = '(Not available for work delivery this cycle)'; // clobber the delivery type text
               }
             // Process current selection
-            if ($site_id == CurrentBasket::site_id())
+            if ($site_id == (new CurrentBasket())->site_id())
               {
                 $selected = true;
                 $select_class = ' select';

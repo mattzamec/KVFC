@@ -1,13 +1,13 @@
 <?php
 include_once 'config_openfood.php';
 session_start();
-valid_auth('member_admin,site_admin,orderex,cashier');
+valid_auth('member_admin,site_admin,orderex,cashier,bulk_admin');
 
 // Set defaults
 
 // Include the display (ajax) page so we can go immediately to the last page...
-$call_display_as_include = true;
-include_once (FILE_PATH.PATH.'ajax/display_order_schedule.php');
+//$call_display_as_include = true;
+//include_once (FILE_PATH.PATH.'ajax/display_order_schedule.php');
 
 $display = '
 <div id="spinner_container"><div id="spinner" style="display:none;"></div></div>
@@ -109,8 +109,9 @@ $page_specific_javascript = '
         url: "'.PATH.'ajax/display_order_schedule.php",
         cache: false,
         data: {
-          data_page: !$.trim($("#"+target).html()) ? 1 : jQuery("#"+target).html()
-          }
+          data_page: !$.trim($("#"+target).html()) ? 1 : jQuery("#"+target).html(),
+          show_bulk: '.(isset($_GET['show_bulk']) && $_GET['show_bulk'] ? $_GET['show_bulk'] : 0).'
+        }
         })
       .done(function(json_schedule_info) {
         schedule_info = JSON.parse(json_schedule_info);
@@ -403,10 +404,10 @@ $page_specific_css = '
   }
   </style>';
 
-$page_title_html = '<span class="title">Reports</span>';
-$page_subtitle_html = '<span class="subtitle">Inspect Accounts</span>';
-$page_title = 'Reports: Inspect Accounts';
-$page_tab = 'cashier_panel';
+$page_title_html = '<span class="title">Order Cycles</span>';
+$page_subtitle_html = '<span class="subtitle">View/Set Ordering Schedule</span>';
+$page_title = 'Order Cycles';
+$page_tab = 'order_admin_panel';
 
 include("template_header.php");
 echo '

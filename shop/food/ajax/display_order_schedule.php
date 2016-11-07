@@ -2,14 +2,16 @@
 
 include_once 'config_openfood.php';
 session_start();
-valid_auth('member_admin,site_admin,orderex,cashier');
+valid_auth('member_admin,site_admin,orderex,cashier,bulk_admin');
 
 // $_POST = $_GET; // FOR DEBUGGING
 
 $data_page = isset($_POST['data_page']) ? mysql_real_escape_string ($_POST['data_page']) : 1;
 $per_page = isset($_POST['per_page']) ? mysql_real_escape_string ($_POST['per_page']) : PER_PAGE;
-$per_page = 10;
+$per_page = 10;   // ummm ... I guess it's always 10, regardless of how it's set above?
 $limit_clause = mysql_real_escape_string (floor (($data_page - 1) * $per_page).", ".floor ($per_page));
+
+$show_bulk = isset($_POST['show_bulk']) ? mysql_real_escape_string($_POST['show_bulk']) : 0;
 
  // Set colors that will be used for consecutive calendar months
  $month_color_array = array ('ace', 'aec', 'cae', 'cea', 'eac', 'eca');
@@ -35,8 +37,8 @@ $query = '
     producer_markdown,
     retail_markup,
     wholesale_markup
-  FROM
-    '.TABLE_ORDER_CYCLES.'
+  FROM '.TABLE_ORDER_CYCLES.'
+  WHERE is_bulk = '.$show_bulk.'
   ORDER BY delivery_date DESC
   LIMIT '.$limit_clause;
 
@@ -248,5 +250,3 @@ $ledger_data['data_page'] = $data_page;
 
 // Send back the json data only when not called as an include file.
 if (! $call_display_as_include) echo json_encode ($ledger_data);
-
-?>
