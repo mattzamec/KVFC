@@ -1,22 +1,22 @@
 <?php
 
-#
-# THIS REALLY REALLY NEEDS TO BE MERGED WITH ajax\customer_basket.php,
-# WHICH IS PRETTY MUCH THE SAME THING COPIED INTO A SEPARATE FILE FOR A 
-# VERITABLE MAINTAINABILITY NIGHTMARE
-#
+// This originally used to be split up into pretty much identical customer_list.php and customer_basket.php files
 
 include_once 'config_openfood.php';
 session_start();
 valid_auth('member');
 
 include_once ('func.open_basket.php');
+include_once ('func.update_basket_item.php');
 
 // Get values for this operation
 // ... from the environment
 $member_id = $_SESSION['member_id'];
-$delivery_id = $_POST['delivery_id'] ? $_POST['delivery_id'] : (new ActiveCycle())->delivery_id();
-$basket_id = $_POST['basket_id'] ? $_POST['basket_id'] : (new CurrentBasket())->basket_id();
+$is_bulk = (isset($_POST['is_bulk']) && $_POST['is_bulk'] == 1);
+$delivery_id = $_POST['delivery_id'] ? $_POST['delivery_id'] : 
+    ($is_bulk ? (new ActiveBulkCycle())->delivery_id() : (new ActiveCycle())->delivery_id());
+$basket_id = $_POST['basket_id'] ? $_POST['basket_id'] : 
+    ($is_bulk ? (new CurrentBulkBasket())->basket_id() : (new CurrentBasket())->basket_id());
 // ... from add/subtract from basket
 $product_id = $_POST['product_id'];
 $product_version = $_POST['product_version'];
@@ -24,26 +24,40 @@ $action = $_POST['action'];
 // ... from update message
 $message = $_POST['message'];
 
+// Abort the operation if we do not have important information
+if (!$delivery_id ||
+    !$member_id ||
+    !$product_id ||
+    !$product_version ||
+    !$action)
+{
+    die(debug_print ("ERROR: 545721 ", 'Call without necessary information.', basename(__FILE__).' LINE '.__LINE__));
+}
+
 // If a basket is not already open, then open one...
-if (!$basket_id)
+if (!$basket_id || $basket_id <= 0)
 {
     $basket_info = open_basket (array (
       'member_id' => $member_id,
       'delivery_id' => $delivery_id,
-      ));
-    if ($basket_info['site_selection'] == 'unset')
-    {
-        echo 'site_id not set';
-        exit (1);
-    }
-    elseif ($basket_info['site_selection'] == 'revert')
-    {
-        echo 'site_id reverted: '.$basket_info['site_long'];
-        exit (1);
-    }
+    ));
+    // If KVFC had multiple sites or delivery types, we may need to deal at this point with the possibility
+    // of not having been able to retrieve default or most recent values for this member when opening the basket.
+    // However, at the moment this is not a concern since there is a single site (1) and delivery type ('P' for pickup)
     $basket_id = $basket_info['basket_id'];
 }
+
+// We need to have the basket ID at this point in order to continue
+if (!$basket_id || $basket_id <= 0)
+{
+    die(debug_print ("ERROR: 545722 ", 'Cannot continue without basket ID.', basename(__FILE__).' LINE '.__LINE__));
+}
+
 // Make sure the quantity we think is in the basket is the quantity that really is in the basket
+$basket_quantity = 0;
+$inventory_id = 0;
+$inventory_quantity = 0;
+$inventory_pull = 1;
 $query = '
   SELECT
     (
@@ -60,88 +74,44 @@ $query = '
   LEFT JOIN '.TABLE_INVENTORY.' ON '.TABLE_INVENTORY.'.inventory_id = '.NEW_TABLE_PRODUCTS.'.inventory_id
   WHERE '.NEW_TABLE_PRODUCTS.'.product_id = "'.mysql_real_escape_string ($product_id).'"
   AND '.NEW_TABLE_PRODUCTS.'.product_version = "'.mysql_real_escape_string ($product_version).'"';
+
 $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 738102 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
 if ($row = mysql_fetch_object($result))
 {
     list ($bpid,$basket_quantity) = explode(':', $row->bpid_quantity);
-//    $basket_quantity = $row->quantity;
     $inventory_quantity = $row->inventory_quantity;
     $inventory_id = $row->inventory_id;
     $inventory_pull = $row->inventory_pull;
 }
-// Abort the operation if we do not have important information
 
-if (!$delivery_id ||
-    !$member_id ||
-    !$basket_id ||
-    !$product_id ||
-    !$product_version ||
-    !$action)
-{
-    die(debug_print ("ERROR: 545721 ", 'Call without necessary information.', basename(__FILE__).' LINE '.__LINE__));
-}
+// These booleans will determine the action to be taken (INSERT/UPDATE/DELETE)
+$add_basket_item = false;
+$update_basket_item = false;
+$remove_basket_item = false;
 
-if ($action == "add")
+// If we're adding an item to a basket, and the product is either not inventory tracked or has inventory ...
+if ($action == "add" && (!$inventory_id || $inventory_quantity))
 {
-    // Create new basket item
-    if ($basket_quantity == 0 &&
-        (($inventory_id && $inventory_quantity > 0) ||
-        ! $inventory_id))
-    {
-        $add_basket_item = true;
-        // Alert that a new item has been added to the basket
-        // $alert = 'Product has been added to the basket';
-        $basket_quantity = 1;
-        $inventory_quantity = $inventory_quantity - 1; // inventory_quantity is adjusted for THIS product
-        $update_basket_item = false;
-    }
-    // No available inventory... do nothing
-    elseif ($inventory_id && $inventory_quantity <= 0)
-    {
-        $add_basket_item = false;
-        // Alert that there are not enough in inventory
-        // $alert = 'Insufficient inventory is available';
-        // $basket_quantity = $basket_quantity; // no change
-        $update_basket_item = false;
-    }
-    // Add to an existing basket item
-    else
-    {
-        $add_basket_item = false;
-        // $alert = 'Product quantity has been updated';
-        $basket_quantity = $basket_quantity + 1;
-        $inventory_quantity = $inventory_quantity - 1;
-        $update_basket_item = true;
-    }
+    $add_basket_item = ($basket_quantity == 0); // Adding a new basket item
+    $update_basket_item = !$add_basket_item;    // Updating existing basket item
+
+    $basket_quantity += 1;
+    $inventory_quantity -= 1;
 }
 elseif ($action == "sub")
 {
-    // Only one basket item, so remove it
-    if ($basket_quantity <= 1)
-    {
-        // Alert that the basket has been emptied
-        // $alert = 'Product has been removed from the basket';
-        $basket_quantity = 0;
-        $inventory_quantity = $inventory_quantity + 1;
-        $remove_basket_item = true;
-        $update_basket_item = false; // no need for update since the item will be removed
-    }
-    elseif ($basket_quantity > 1)
-    {
-        // Alert that the basket is already empty
-        // $alert = 'The item was not in your basket';
-        $basket_quantity = $basket_quantity - 1;
-        $inventory_quantity = $inventory_quantity + 1;
-        $remove_basket_item = false;
-        $update_basket_item = true;
-    }
+    $remove_basket_item = ($basket_quantity <= 1); // If there is 1 or no basket items, we'll delete the record
+    $update_basket_item = !$remove_basket_item;    // If there are multiple basket items, we'll update 
+
+    $basket_quantity -= 1;
+    $inventory_quantity += 1;
 }
-// First add the basket item, if needed
-if ($add_basket_item == true)
+
+// Take the appropriate INSERT/UPDATE/DELETE action
+if ($add_basket_item)
 {
     $query = '
-      INSERT INTO
-        '.NEW_TABLE_BASKET_ITEMS.' (
+      INSERT INTO '.NEW_TABLE_BASKET_ITEMS.' (
         basket_id,
         product_id,
         product_version,
@@ -169,8 +139,7 @@ if ($add_basket_item == true)
     $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 155816 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
     $bpid= mysql_insert_id();
 }
-// Then update the quantity, if needed
-if ($update_basket_item == true)
+else if ($update_basket_item)
 {
     $query = '
       UPDATE '.NEW_TABLE_BASKET_ITEMS.'
@@ -180,23 +149,7 @@ if ($update_basket_item == true)
       AND product_version = "'.mysql_real_escape_string ($product_version).'"';
     $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 731034 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
 }
-if ($inventory_id && ($action == 'add' || $action == 'sub'))
-{
-    if ($action == 'add')
-    {
-        $inventory_function = '-';
-    }
-    elseif ($action == 'sub')
-    {
-        $inventory_function = '+';
-    }
-    $query = '
-      UPDATE '.TABLE_INVENTORY.'
-      SET quantity = quantity '.$inventory_function.' '.mysql_real_escape_string ($inventory_pull).'
-      WHERE inventory_id = '.mysql_real_escape_string ($inventory_id);
-    $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 066934 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
-}
-if ($remove_basket_item == true)
+else if ($remove_basket_item)
 {
     $query = '
       DELETE FROM '.NEW_TABLE_BASKET_ITEMS.'
@@ -205,9 +158,19 @@ if ($remove_basket_item == true)
       AND product_version = "'.mysql_real_escape_string ($product_version).'"';
     $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 267490 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
 }
+
+// Adjust the inventory table if applicable
+if ($inventory_id && ($action == 'add' || $action == 'sub'))
+{
+    $query = '
+      UPDATE '.TABLE_INVENTORY.'
+      SET quantity = quantity '.($action == 'add' ? '+ ' : '- ').mysql_real_escape_string ($inventory_pull).'
+      WHERE inventory_id = '.mysql_real_escape_string ($inventory_id);
+    $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 066934 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
+}
+
 // Handle messages
-// First remove all messages, no matter what. Without this process, additional messages
-// keep getting added.
+// First remove all messages, no matter what. Without this process, additional messages keep getting added.
 if (isset ($bpid))
 { // Delete if necessary
     $query = '
@@ -220,8 +183,8 @@ if (isset ($bpid))
             WHERE description = "customer notes to producer"
           )';
     $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 285097 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
-    // Now post the message back, as needed
-    if ($message != '' && $remove_basket_item != true)
+    // Now post the message back if needed
+    if ($message != '' && !$remove_basket_item)
     { // Update message
         $query = '
           INSERT INTO '.NEW_TABLE_MESSAGES.'
@@ -236,6 +199,29 @@ if (isset ($bpid))
             referenced_key1 = "'.mysql_real_escape_string($bpid).'"';
         $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 925223 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
     }
+}
+
+if ($action == 'checkout')
+{
+    // Make sure there is a good basket for this order
+    $basket_item_info = update_basket_item(array (
+      'action' => 'checkout',
+      'delivery_id' => $delivery_id,
+      'member_id' => $member_id,
+      'product_id' => $product_id,
+      'product_version' => $product_version,
+      'messages' => $message
+      ));
+}
+if ($action == 'checkout_basket')
+{
+    // Check out the whole basket
+    $basket_info = update_basket(array(
+      'basket_id' => $basket_id,
+      'delivery_id' => $delivery_id,
+      'member_id' => $member_id,
+      'action' => 'checkout'
+      ));
 }
 
 // The following is necessary because this is also called when javascript/ajax is turned off and

@@ -6,7 +6,7 @@
 // * site_id           site_id for the basket to be opened (maybe optional)
 // * delivery_type     delivery_type for the basket to be opened (maybe optional)
 function open_basket (array $data)
-  {
+{
     global $connection;
     // Expose additional parameters as they become needed. Call with:
     $basket_fields = array (
@@ -23,12 +23,12 @@ function open_basket (array $data)
       'order_date',
       'checked_out',
       'locked'
-      );
+    );
     // At a minimum, we need to know the member_id and the delivery_id
-    if (! $data['member_id'] || ! $data['delivery_id'])
-      {
+    if (!$data['member_id'] || !$data['delivery_id'])
+    {
         die(debug_print('ERROR: 504 ', 'call to create basket without all parameters', basename(__FILE__).' LINE '.__LINE__));
-      }
+    }
     // See if a basket already exists
     $query_basket_info = '
       SELECT
@@ -39,49 +39,18 @@ function open_basket (array $data)
         AND delivery_id = "'.mysql_real_escape_string ($data['delivery_id']).'"';
     $result_basket_info = mysql_query($query_basket_info, $connection) or die(debug_print ("ERROR: 892122 ", array ($query_basket_info,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
     if ($row_basket_info = mysql_fetch_array($result_basket_info))
-      {
-        // Done with nothing to do. Return the information...
+    {
+        // If we have an existing basket, return the info and we're done
         return ($row_basket_info);
-      }
-    // Now we need site_id and delivery_type. If we already have them, good. Otherwise make a best-guess
-    if (! $data['site_id'])
-      {
-        // See what site_id this member used prior to the target delivery_id
-        $query_site_guess = '
-          SELECT
-            '.NEW_TABLE_BASKETS.'.site_id,
-            '.NEW_TABLE_BASKETS.'.delivery_type
-          FROM '.NEW_TABLE_BASKETS.'
-          LEFT JOIN '.NEW_TABLE_SITES.' USING(site_id)
-          WHERE
-            '.NEW_TABLE_BASKETS.'.delivery_id < "'.mysql_real_escape_string($data['delivery_id']).'"
-            AND '.NEW_TABLE_BASKETS.'.member_id = "'.mysql_real_escape_string($data['member_id']).'"
-            AND '.NEW_TABLE_SITES.'.inactive = 0
-            AND '.NEW_TABLE_SITES.'.site_type = "customer"
-          ORDER BY '.NEW_TABLE_BASKETS.'.delivery_id DESC
-          LIMIT 1';
-        $result_site_guess = mysql_query($query_site_guess, $connection) or die(debug_print ("ERROR: 902524 ", array ($query_site_guess,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
-        // If we get a result back, then we will use it
-        if ($row_site_guess = mysql_fetch_array($result_site_guess))
-          {
-            $data['site_id'] = $row_site_guess['site_id'];
-            // If we already have a delivery_type value, then do not clobber it
-            if (! $data['delivery_type'])
-              {
-                $data['delivery_type'] = $row_site_guess['delivery_type'];
-              }
-            $data['site_selection'] = 'revert';
-          }
-        // Otherwise, we got no value back for the site_id (customer probably had no prior orders)
-        else
-          {
-            // We could try some other things to make successively poor guesses, but for now
-            // this will be the end of the line
-            $data['site_selection'] = 'unset';
-            return ($data);
-            // die(debug_print('ERROR: 505 ', 'create basket with no remaining good guesses', basename(__FILE__).' LINE '.__LINE__));
-          }
-      }
+    }
+
+    // KVFC only has one site and one delivery type. If ever there are new ones added, we may need to account for this
+    // when opening a new basket, and either ensure we have them in the $data array supplied, or select the values
+    // for the last legit order for this member or find another way of guessing at them.
+    // For the time being, we just brutally hardcode it to 1 and 'P'
+    $data['site_id'] = 1;
+    $data['delivery_type'] = 'P';
+
     // Get additional basket data for opening this basket
     $query_basket_data = '
       SELECT
@@ -97,11 +66,11 @@ function open_basket (array $data)
       INNER JOIN '.TABLE_MEMBER.'
       LEFT JOIN '.TABLE_MEMBERSHIP_TYPES.' USING(membership_type_id)
       WHERE
-        '.NEW_TABLE_SITES.'.site_id = "'.mysql_real_escape_string($data['site_id']).'"
-        AND '.TABLE_MEMBER.'.member_id = "'.mysql_real_escape_string($data['member_id']).'"';
+        '.NEW_TABLE_SITES.'.site_id = "'.mysql_real_escape_string($data['site_id']).'" AND '
+        .TABLE_MEMBER.'.member_id = "'.mysql_real_escape_string($data['member_id']).'"';
     $result_basket_data = mysql_query($query_basket_data, $connection) or die(debug_print ("ERROR: 983134 ", array ($query_basket_data,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
     if ($row_basket_data = mysql_fetch_array($result_basket_data))
-      {
+    {
         $data['delivery_postal_code'] = $row_basket_data['delivery_postal_code'];
         $data['delivery_cost'] = $row_basket_data['delivery_cost'];
         $data['order_cost'] = $row_basket_data['order_cost'];
@@ -110,30 +79,32 @@ function open_basket (array $data)
         $data['site_long'] = $row_basket_data['site_long'];
         $home_zip = $row_basket_data['home_zip'];
         $work_zip = $row_basket_data['work_zip'];
-      }
+    }
     else
-      {
+    {
         die(debug_print('ERROR: 506 ', 'create basket failure to gather information', basename(__FILE__).' LINE '.__LINE__));
-      }
+    }
   // If the delivery is not 'P' (pickup) then set the clobber $delivery_postal_code with the correct value
+  // However, it WILL be 'P' for all KVFC baskets
   if ($data['delivery_type'] == 'H')
-    {
+  {
       $data['delivery_postal_code'] = $home_zip;
-    }
+  }
   elseif ($data['delivery_type'] == 'W')
-    {
+  {
       $data['delivery_postal_code'] = $work_zip;
-    }
+  }
   elseif ($data['delivery_type'] != 'P')
-    {
+  {
       die(debug_print('ERROR: 507 ', 'create basket invalid delivery_type', basename(__FILE__).' LINE '.__LINE__));
-    }
+  }
   // Check if there is a delivery_postal code provided This should possibly check against
   // the tax_rates table to see that the postal code is included there...?
+  // In KVFC, this comes from the single kvfc_sites table entry and will be populated ...
   if (! $data['delivery_postal_code'])
-    {
+  {
       die(debug_print('ERROR: 508 ', 'create basket invalid delivery_postal_code', basename(__FILE__).' LINE '.__LINE__));
-    }
+  }
   // Now open a basket with the provided (or guessed) information
   $query_open_basket = '
     INSERT INTO '.NEW_TABLE_BASKETS.'

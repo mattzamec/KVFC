@@ -74,14 +74,6 @@ $show_bulk = isset($_GET['show_bulk']) && $_GET['show_bulk'] == 1;
 $active_cycle = $show_bulk ? new ActiveBulkCycle() : new ActiveCycle();
 $next_cycle = $show_bulk ? new NextBulkCycle() : new NextCycle();
 
-// Get basket information
-$current_basket = $show_bulk ? new CurrentBulkBasket() : new CurrentBasket();
-$basket_id = mysql_real_escape_string($_GET['basket_id'] ? $_GET['basket_id'] : $current_basket->basket_id());
-//$basket_open_true = 0;
-//if ($current_basket->basket_id() > 0) {
-//    $basket_open_true = 1;
-//}
-
 // Get a delivery_id for pulling current producer "invoices"
 $delivery_id = mysql_real_escape_string($_GET['delivery_id'] ? $_GET['delivery_id'] : $active_cycle->delivery_id());
 
@@ -596,18 +588,17 @@ function AddToCart (product_id, product_version, action) {
   var elem;
   var message = "";
   if (elem = document.getElementById("message"+product_id)) message = elem.value;
-  var basket_id = "'.$basket_id.'";
-  if (elem = document.getElementById("basket_id")) basket_id = elem.value;
   var member_id = "";
   if (elem = document.getElementById("member_id")) member_id = elem.value;
   var delivery_id = "'.$delivery_id.'";
   if (elem = document.getElementById("delivery_id")) delivery_id = elem.value;
-  jQuery.post("'.PATH.'ajax/'.$template_type.'.php", {
+  jQuery.post("'.PATH.'ajax/'.
+// Combined customer_list and customer_basket ajax pages since they were the same 
+($template_type == "customer_basket" ? "customer_list" : $template_type).'.php", {
     product_id:product_id,
     product_version:product_version,
     action:action,
     message:message,
-    basket_id:basket_id,
     member_id:member_id,
     delivery_id:delivery_id
     },
