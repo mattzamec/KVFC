@@ -40,7 +40,7 @@ $database_config = array (
 connect_to_database ($database_config);
 
 // Set all additional configurations from the database
-get_configuration ($database_config, $override_config);
+get_configuration ($database_config, isset($override_config) ? $override_config : []);
 
 // Set the time zone
 date_default_timezone_set ('America/Los_Angeles');
