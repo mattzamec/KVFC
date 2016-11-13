@@ -33,7 +33,7 @@ abstract class OrderCycle
         //    OR customer_type LIKE "%institution%"';
 
         // Run the query
-        debug_print('INFO: RUNNING QUERY in OrderCycle constructor for WHERE clause '.$prm_where_clause.'; class is '.get_class($this));
+        // debug_print('INFO: RUNNING QUERY in OrderCycle constructor for WHERE clause '.$prm_where_clause.'; class is '.get_class($this));
 
         $query = '
         SELECT *
@@ -270,9 +270,6 @@ abstract class Basket
     {
         global $connection;
 
-        // Run the query
-        debug_print('INFO: RUNNING QUERY in Basket constructor; class is '.get_class($this));
-
         $query = '
           SELECT
             '.NEW_TABLE_BASKETS.'.basket_id,
@@ -281,6 +278,10 @@ abstract class Basket
           LEFT JOIN '.NEW_TABLE_SITES.' USING(site_id)
           WHERE '.NEW_TABLE_BASKETS.'.delivery_id = "'.mysql_real_escape_string($prm_is_bulk ? (new ActiveBulkCycle())->delivery_id() : (new ActiveCycle())->delivery_id()).'"
           AND '.NEW_TABLE_BASKETS.'.member_id = "'.mysql_real_escape_string ($_SESSION['member_id']).'"';
+
+        // Run the query
+        // debug_print('INFO: RUNNING QUERY '.$query.' in Basket constructor; class is '.get_class($this));
+
         $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 783032 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
         if ($row = mysql_fetch_object ($result))
         {
