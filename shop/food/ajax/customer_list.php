@@ -58,6 +58,7 @@ $basket_quantity = 0;
 $inventory_id = 0;
 $inventory_quantity = 0;
 $inventory_pull = 1;
+
 $query = '
   SELECT
     (
@@ -67,9 +68,9 @@ $query = '
       AND product_id = "'.mysql_real_escape_string ($product_id).'"
       AND product_version = "'.mysql_real_escape_string ($product_version).'"
     ) AS bpid_quantity,
-    '.NEW_TABLE_PRODUCTS.'.inventory_id,
-    '.NEW_TABLE_PRODUCTS.'.inventory_pull,
-    FLOOR('.TABLE_INVENTORY.'.quantity / '.NEW_TABLE_PRODUCTS.'.inventory_pull) AS inventory_quantity
+    IFNULL('.NEW_TABLE_PRODUCTS.'.inventory_id, 0) AS `inventory_id`,
+    CASE WHEN IFNULL('.NEW_TABLE_PRODUCTS.'.inventory_id, 0) = 0 THEN 0 ELSE '.NEW_TABLE_PRODUCTS.'.inventory_pull END AS `inventory_pull`,
+    IFNULL(FLOOR('.TABLE_INVENTORY.'.quantity / '.NEW_TABLE_PRODUCTS.'.inventory_pull), 0) AS `inventory_quantity`
   FROM '.NEW_TABLE_PRODUCTS.'
   LEFT JOIN '.TABLE_INVENTORY.' ON '.TABLE_INVENTORY.'.inventory_id = '.NEW_TABLE_PRODUCTS.'.inventory_id
   WHERE '.NEW_TABLE_PRODUCTS.'.product_id = "'.mysql_real_escape_string ($product_id).'"
