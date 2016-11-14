@@ -600,7 +600,8 @@ function AddToCart (product_id, product_version, action) {
     action:action,
     message:message,
     member_id:member_id,
-    delivery_id:delivery_id
+    delivery_id:delivery_id,
+    is_bulk:'.($show_bulk ? '1' : '0').'
     },
   function(data) {
     // If site is being inferred from a prior order, then notify of the assumption
