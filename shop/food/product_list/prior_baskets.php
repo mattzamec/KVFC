@@ -20,7 +20,6 @@ else
 
 $where_old_basket_items = '
     AND old_baskets.member_id = "'.mysql_real_escape_string ($member_id).'"
-    AND old_baskets.is_bulk = 0 
     AND old_baskets.delivery_id < "'.mysql_real_escape_string ($delivery_id).'"';
 
 $order_by = '
@@ -129,7 +128,7 @@ $query = '
     AND '.NEW_TABLE_BASKET_ITEMS.'.basket_id > 0)
   LEFT JOIN '.NEW_TABLE_MESSAGES.' ON (referenced_key1 = '.NEW_TABLE_BASKET_ITEMS.'.bpid AND message_type_id =
     (SELECT message_type_id FROM '.NEW_TABLE_MESSAGE_TYPES.' WHERE description = "customer notes to producer"))
-  WHERE'.
+  WHERE '.TABLE_PRODUCER.'.is_bulk = 0'.
     $where_producer_pending.
     $where_unlisted_producer.
     $where_catsubcat.
