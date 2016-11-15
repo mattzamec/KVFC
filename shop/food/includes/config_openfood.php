@@ -1,7 +1,7 @@
 <?php
 
 // Include commonly-used functions
-include_once ('general_functions.php');
+include_once (__DIR__.'/general_functions.php');
 
 // Access parameters for the database and OFS configuration table
 //$database_config = array (

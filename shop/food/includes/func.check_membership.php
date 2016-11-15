@@ -1,6 +1,6 @@
 <?php
 
-include_once('func.update_ledger.php');
+include_once(__DIR__.'/func.update_ledger.php');
 
 // This function will return some membership parameters for a particular member_id
 // Returns an array of associative values for: 

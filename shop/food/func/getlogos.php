@@ -1,5 +1,5 @@
 <?php
-include_once '../includes/config_openfood.php';
+include_once __DIR__.'/../includes/config_openfood.php';
 // getdata.php3 - by Florian Dittmer <dittmer@gmx.net>
 // Example php script to demonstrate the direct passing of binary data
 // to the user. More infos at http://www.phpbuilder.com

@@ -1,13 +1,13 @@
 <?php
-include_once 'config_openfood.php';
+include_once __DIR__.'/config_openfood.php';
 
-include_once ('func.get_basket_item.php');
-include_once ('func.get_basket.php');
-include_once ('func.get_member.php');
-include_once ('func.get_producer.php');
-include_once ('func.get_product.php');
-include_once ('func.update_ledger.php');
-include_once ('func.update_basket.php');
+include_once (__DIR__.'/func.get_basket_item.php');
+include_once (__DIR__.'/func.get_basket.php');
+include_once (__DIR__.'/func.get_member.php');
+include_once (__DIR__.'/func.get_producer.php');
+include_once (__DIR__.'/func.get_product.php');
+include_once (__DIR__.'/func.update_ledger.php');
+include_once (__DIR__.'/func.update_basket.php');
 // include_once ('func.open_basket.php');
 
 session_start();

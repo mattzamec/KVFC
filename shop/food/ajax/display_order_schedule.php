@@ -1,6 +1,6 @@
 <?php
 
-include_once '../includes/config_openfood.php';
+include_once __DIR__.'/../includes/config_openfood.php';
 session_start();
 valid_auth('member_admin,site_admin,orderex,cashier,bulk_admin');
 

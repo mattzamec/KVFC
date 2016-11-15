@@ -1,6 +1,6 @@
 <?php
-include_once '../includes/config_openfood.php';
-include_once ('../includes/func.get_product.php');
+include_once __DIR__.'/../includes/config_openfood.php';
+include_once (__DIR__.'/../includes/func.get_product.php');
 
 // Initialize variables
 $ranwt_bg = ' class="random_wt_row"'; // Random-weight fields
@@ -507,7 +507,7 @@ elseif( $action == 'add' )
 $display .= '
   </table>';
 $display .= $font.' <br><br>For questions not covered in the <a href="help.php">(?)</a>links,<br>contact <a href="mailto:'.HELP_EMAIL.'">'.HELP_EMAIL.'</a>';
-include('func/show_businessname.php');
+include(__DIR__.'/show_businessname.php');
 $help = '
   <table>
     <tr>

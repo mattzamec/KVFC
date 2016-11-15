@@ -1,5 +1,5 @@
 <?php
-include_once '../includes/config_openfood.php';
+include_once __DIR__.'/../includes/config_openfood.php';
 
 // Get the arguments passed in the query_data variable
 // Format is "basket_id[basket_id]:[delivery_id]  e.g.  basket_id45322:45
@@ -71,7 +71,7 @@ if ($row = mysql_fetch_array($result))
       'member_id' => $row['member_id'],
       'type' => 'customer_invoice',
       'output' => 'pdf');
-    include ('../show_report.php');
+    include (__DIR__.'/../show_report.php');
     $customer_invoice = '<div class="invoice-container">'.$display.'</div>'.HTMLDOC_PAGING;
     if ( strpos($customer_invoice, 'EMPTY INVOICE') === false )
       {

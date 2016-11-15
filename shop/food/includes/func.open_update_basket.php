@@ -1,5 +1,5 @@
 <?php
-include_once('func.update_basket.php');
+include_once(__DIR__.'/func.update_basket.php');
 
 // This function will open a new basket and return the basket information in an associative array
 // Input data is an associative array with values:

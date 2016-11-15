@@ -1,6 +1,6 @@
 <?php
 
-include_once ('func.get_account_info.php');
+include_once (__DIR__.'/func.get_account_info.php');
 
 // This function is used to add new transactions to the ledger. Transactions will only be added  //
 // if the data is new (other than the added_by value). Values for the new transaction are stored //

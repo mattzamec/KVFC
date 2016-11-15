@@ -1,7 +1,7 @@
 <?php
 
 // Include classes for ActiveCycle, CurrentBasket, and CurrentMember
-include_once ('classes_base.php');
+include_once (__DIR__.'/classes_base.php');
 
 // Establish a connection to the OFS database
 function connect_to_database ($database_config)

@@ -6,7 +6,7 @@
 $show_search = false;
 
 // This is the producer's public page, so display producer info at the top
-include('../func/display_producer_page.php');
+include(__DIR__.'/../func/display_producer_page.php');
 $producer_display .= prdcr_info($producer_id, $producer_link);
 
 $where_misc = '

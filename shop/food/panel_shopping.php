@@ -288,9 +288,9 @@ $page_subtitle_html = '<span class="subtitle">Shopping Panel</span>';
 $page_title = 'Shopping Panel';
 $page_tab = 'shopping_panel';
 
-include("template_header.php");
+include(__DIR__."/template_header.php");
 echo '
   <!-- CONTENT BEGINS HERE -->
   '.$display.'
   <!-- CONTENT ENDS HERE -->';
-include("template_footer.php");
+include(__DIR__."/template_footer.php");

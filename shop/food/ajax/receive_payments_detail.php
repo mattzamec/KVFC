@@ -1,5 +1,5 @@
 <?php
-include_once '../includes/config_openfood.php';
+include_once __DIR__.'/../includes/config_openfood.php';
 session_start();
 
 if (CurrentMember::auth_type('cashier') &&

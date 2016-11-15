@@ -1,5 +1,5 @@
 <?php
-include_once '../includes/config_openfood.php';
+include_once __DIR__.'/../includes/config_openfood.php';
 
 // Get the arguments passed in the query_data variable
 $argument_array = explode (':', $_POST['query_data']);
@@ -58,7 +58,7 @@ if ($delivery_id && $producer_id)
       'producer_id' => $producer_id,
       'type' => 'producer_invoice',
       'output' => 'pdf');
-    include ('../show_report.php');
+    include (__DIR__.'/../show_report.php');
     $producer_invoice = '<div class="invoice-container">'.$display.'</div>'.HTMLDOC_PAGING;
     if ( strpos($producer_invoice, 'EMPTY INVOICE') === false )
       {

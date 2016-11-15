@@ -1,9 +1,9 @@
 <?php
-include_once 'config_openfood.php';
+include_once __DIR__.'/config_openfood.php';
 
-include_once ('func.get_basket.php');
-include_once ('func.update_ledger.php');
-include_once ('func.update_basket_item.php');
+include_once (__DIR__.'/func.get_basket.php');
+include_once (__DIR__.'/func.update_ledger.php');
+include_once (__DIR__.'/func.update_basket_item.php');
 
 session_start();
 //valid_auth('cashier,site_admin');

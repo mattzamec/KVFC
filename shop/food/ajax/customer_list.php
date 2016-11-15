@@ -1,13 +1,12 @@
 <?php
 
 // This originally used to be split up into pretty much identical customer_list.php and customer_basket.php files
-
-include_once ('../includes/config_openfood.php');
+include_once (__DIR__.'/../includes/config_openfood.php');
 session_start();
 valid_auth('member');
 
-include_once ('../includes/func.open_basket.php');
-include_once ('../includes/func.update_basket_item.php');
+include_once (__DIR__.'/../includes/func.open_basket.php');
+include_once (__DIR__.'/../includes/func.update_basket_item.php');
 
 // Get values for this operation
 // ... from the environment

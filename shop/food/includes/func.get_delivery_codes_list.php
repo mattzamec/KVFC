@@ -1,7 +1,7 @@
 <?php
 
-include_once ('func.open_update_basket.php');
-include_once ('func.get_basket.php');
+include_once (__DIR__.'/func.open_update_basket.php');
+include_once (__DIR__.'/func.get_basket.php');
 
 // This function will get the html markup for a div containing formatted basket history.
 // Sample/suggested CSS is given at the end.
