@@ -61,7 +61,7 @@ else
 // Get bulk basket status information
 $query = '
   SELECT
-    COUNT(product_id) AS basket_quantity,
+    SUM(quantity) AS basket_quantity,
     '.NEW_TABLE_BASKETS.'.basket_id
   FROM '.NEW_TABLE_BASKETS.'
   LEFT JOIN '.NEW_TABLE_BASKET_ITEMS.' ON '.NEW_TABLE_BASKETS.'.basket_id = '.NEW_TABLE_BASKET_ITEMS.'.basket_id
