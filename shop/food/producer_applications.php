@@ -1,8 +1,7 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 valid_auth('site_admin,producer_admin');
-
 
 $content_applications .= '
 <small>NOTE: This page is scrolled horizontally.  The horizontal scroll-bar is at the bottom of the page &darr;</small>

@@ -1,5 +1,5 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 valid_auth('cashier');
 
@@ -245,7 +245,7 @@ if ($type == 'update')
         $result = mysql_query($query, $connection) or die(debug_print ("ERROR: 759302 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
         $original_transaction_data['transaction_group_id'] = $new_transaction_group_id;
       }
-    include_once ('func.update_ledger.php');
+    include_once ('includes/func.update_ledger.php');
     // If zero_split is true, then we will first post a zeroing transaction before
     // Updating (splitting) the remaining one.
     if ($zero_split == 'true')
@@ -428,7 +428,7 @@ if ($type == 'add')
     // Message
     $new_messages = $_REQUEST['adjustment_message'];
 
-    include_once ('func.update_ledger.php');
+    include_once ('includes/func.update_ledger.php');
     $messages = array ();
     if ($_REQUEST['adjustment_message'] != '') $messages['ledger comment'] = $_REQUEST['adjustment_message'];
     // Add the transaction into the ledger

@@ -1,5 +1,5 @@
 <?php
-include_once ('func.get_baskets_list.php');
+include_once ('includes/func.get_baskets_list.php');
 valid_auth('member');
 
 // Set content_top to show basket selector...

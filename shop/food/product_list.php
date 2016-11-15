@@ -1,6 +1,6 @@
 <?php
 
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 // Validations are done in the product_list/* files
 // Sanitize variables that are expected to be numeric

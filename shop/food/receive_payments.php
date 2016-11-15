@@ -1,9 +1,9 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 valid_auth('route_admin,member_admin,cashier,site_admin');
 
-include ('func.delivery_selector.php');
+include ('includes/func.delivery_selector.php');
 
 // Set up the default delivery cycle
 $delivery_id = isset($_GET['delivery_id']) ? $_GET['delivery_id'] : (new ActiveCycle())->delivery_id();

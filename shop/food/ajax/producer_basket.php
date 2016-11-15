@@ -1,10 +1,10 @@
 <?php
-include_once 'config_openfood.php';
+include_once '../includes/config_openfood.php';
 session_start();
 valid_auth('member');
 
-include_once ('func.get_basket_item.php');
-include_once ('func.update_basket_item.php');
+include_once ('../includes/func.get_basket_item.php');
+include_once ('../includes/func.update_basket_item.php');
 
 // $action = [set_weight|set_quantity|set_weight_quantity]
 $bpid = $_POST['bpid'];

@@ -1,5 +1,5 @@
 <?php
-include_once 'config_openfood.php';
+include_once '../includes/config_openfood.php';
 session_start ();
 
 // First ensure we have authority to execute member updates

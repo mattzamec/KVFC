@@ -1,8 +1,7 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 valid_auth('producer,producer_admin,site_admin');
-
 
 // store.php3 - by Florian Dittmer <dittmer@gmx.net>
 // Example php script to demonstrate the storing of binary files into

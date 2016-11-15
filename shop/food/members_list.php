@@ -1,8 +1,7 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 valid_auth('member_admin');
-
 
 $delivery_id = (new ActiveCycle())->delivery_id();
 $sql = '

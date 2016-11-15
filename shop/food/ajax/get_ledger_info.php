@@ -1,9 +1,9 @@
 <?php
-include_once 'config_openfood.php';
+include_once '../includes/config_openfood.php';
 session_start();
 valid_auth('member_admin,site_admin,cashier');
 
-include_once ('func.get_ledger_row_markup.php');
+include_once ('../includes/func.get_ledger_row_markup.php');
 
 //echo '<tr><td colspan="9" style="text-align:left;">';
 

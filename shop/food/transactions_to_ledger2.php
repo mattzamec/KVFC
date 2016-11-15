@@ -1,9 +1,8 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 
-include_once ('func.update_ledger.php');
-
+include_once ('includes/func.update_ledger.php');
 
 // README  README  README  README  README  README  README  README  README  README  README  README 
 // 

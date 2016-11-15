@@ -1,9 +1,9 @@
 <?php
-include_once 'config_openfood.php';
+include_once '../includes/config_openfood.php';
 session_start();
 valid_auth('member');
 
-include_once ('func.open_basket.php');
+include_once ('../includes/func.open_basket.php');
 
 // Get values for this operation
 // ... from the environment

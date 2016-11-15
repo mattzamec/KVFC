@@ -1,8 +1,7 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 valid_auth('producer,producer_admin');
-
 
 $producer_id = $_GET['producer_id'];
 include("func/show_businessname.php");

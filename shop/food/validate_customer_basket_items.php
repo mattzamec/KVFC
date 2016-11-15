@@ -1,5 +1,5 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 
 // CHECK FOR AJAX CALL (for compactness, this script handles its own ajax)

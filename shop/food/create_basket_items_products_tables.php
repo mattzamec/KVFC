@@ -1,5 +1,5 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 
 // We need to access the OLD product_list_prep table -- without the database

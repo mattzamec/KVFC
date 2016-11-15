@@ -1,9 +1,9 @@
 <?php
 
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 // valid_auth('member');
-include_once ('func.check_membership.php');
+include_once ('includes/func.check_membership.php');
 
 // This is the new member landing page
 // It will allow login/logout, handle membership renewals, and site messages.

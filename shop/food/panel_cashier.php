@@ -1,8 +1,7 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 valid_auth('site_admin,cashier');
-
 
 $display_cashier = '
   <table width="100%" class="compact">

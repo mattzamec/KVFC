@@ -1,7 +1,6 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
-
 
 $page_name = $_SERVER['SCRIPT_NAME'];
 $producer_id = $_GET['pid'];

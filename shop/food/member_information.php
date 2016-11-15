@@ -1,8 +1,8 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 valid_auth('site_admin,member_admin'); // Disable this line to allow member access to their own information
-include_once ('func.check_membership.php');
+include_once ('includes/func.check_membership.php');
 
 // Restrict view to member_admin and cashier except for a person's own information
 if (CurrentMember::auth_type('member_admin,cashier') &&

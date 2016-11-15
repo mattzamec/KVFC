@@ -1,7 +1,7 @@
 <?php
 
-include_once 'general_functions.php'; // just in case it got missed from the base page
-include_once ('wordpress_utilities.php');
+include_once 'includes/general_functions.php'; // just in case it got missed from the base page
+include_once ('includes/wordpress_utilities.php');
 $content_header = '';
 $google_analytics = '';
 $panel_member_menu = '';

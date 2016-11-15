@@ -1,6 +1,5 @@
 <?php
-include_once 'config_openfood.php';
-
+include_once '../includes/config_openfood.php';
 
 // Get the arguments passed in the query_data variable
 // Format is "basket_id[basket_id]:[delivery_id]  e.g.  basket_id45322:45

@@ -1,8 +1,7 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 valid_auth('producer');
-
 
 $producer_admin_true = 0;
 if (CurrentMember::auth_type('producer_admin')) $producer_admin_true = 1;

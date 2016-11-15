@@ -1,5 +1,5 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 
 // README  README  README  README  README  README  README  README  README  README  README  README 
@@ -63,7 +63,7 @@ if (isset ($_REQUEST['ajax']) && $_REQUEST['ajax'] == 'yes')
         $basket_id = $_REQUEST['basket_id'];
         // echo 'PAUSE                         ';
         // Get information about this basket
-        include_once ('func.update_basket.php');
+        include_once ('includes/func.update_basket.php');
         $basket_info = get_basket ($basket_id);
         // Now go create the ledger entries...
         $basket_info = update_basket(array(

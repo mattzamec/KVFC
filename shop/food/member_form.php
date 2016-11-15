@@ -1,8 +1,8 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 // valid_auth('member');  // Do not authenticate so this page is accessible to everyone
-require_once ('securimage.php');
+require_once ('includes/securimage.php');
 
 // SPECIAL NOTES ABOUT THIS PAGE: //////////////////////////////////////////////
 //                                                                            //
@@ -688,7 +688,7 @@ if (count ($error_array) == 0 && $_POST['action'] == 'Submit') // For new member
         no_postal_mail = "'.mysql_real_escape_string ($no_postal_mail).'"';
     $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 793032 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
     $member_id = mysql_insert_id();
-    include_once ('func.update_ledger.php');
+    include_once ('includes/func.update_ledger.php');
     // Post the membership receivable
     $transaction_row = add_to_ledger (array (
       'transaction_group_id' => '',

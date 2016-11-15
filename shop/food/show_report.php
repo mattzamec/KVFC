@@ -1,5 +1,5 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 
 // Items dependent upon the location of this header

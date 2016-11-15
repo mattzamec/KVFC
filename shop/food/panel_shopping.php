@@ -1,10 +1,10 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 valid_auth('member');
 
-include_once ('func.open_update_basket.php');
-include_once ('func.get_baskets_list.php');
+include_once ('includes/func.open_update_basket.php');
+include_once ('includes/func.get_baskets_list.php');
 // include_once ('func.get_delivery_codes_list.php');   // MZ: This creates a pull-down of locations. Since there is only one, we skip this.
 
 $active_cycle = new ActiveCycle();

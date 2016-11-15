@@ -1,5 +1,5 @@
 <?php
-include_once 'config_openfood.php';
+include_once '../includes/config_openfood.php';
 
 // Get the arguments passed in the query_data variable
 $argument_array = explode (':', $_POST['query_data']);

@@ -1,6 +1,6 @@
 <?php
 
-include 'securimage.php';
+include 'includes/securimage.php';
 
 $img = new securimage();
 

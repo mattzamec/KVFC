@@ -1,12 +1,12 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 valid_auth('route_admin,member_admin,cashier,site_admin');
 
 // EXPLANATION/PURPOSE OF THIS FILE
 // This is the basic entry-page for making payments to producers
 
-include ('func.delivery_selector.php');
+include ('includes/func.delivery_selector.php');
 
 // Set up the default delivery cycle
 $delivery_id = (new ActiveCycle())->delivery_id();

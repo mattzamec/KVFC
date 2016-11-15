@@ -1,6 +1,6 @@
 <?php
-include_once 'config_openfood.php';
-include_once 'image_functions.php';
+include_once 'includes/config_openfood.php';
+include_once 'includes/image_functions.php';
 
 $image_id = mysql_real_escape_string($_GET['image_id']);
 

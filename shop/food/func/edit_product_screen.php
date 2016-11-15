@@ -1,6 +1,6 @@
 <?php
-include_once 'config_openfood.php';
-include_once ('func.get_product.php');
+include_once '../includes/config_openfood.php';
+include_once ('../includes/func.get_product.php');
 
 // Initialize variables
 $ranwt_bg = ' class="random_wt_row"'; // Random-weight fields

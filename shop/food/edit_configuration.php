@@ -30,11 +30,11 @@ if (isset ($_POST['action']) && $_POST['action'] == $save_button_text)
  // If we need the old configuration values, then include old configuration instead of new one
 if ($preload_from_old_config)
   {
-    @include_once 'config_openfood.php';
+    @include_once 'includes/config_openfood.php';
     $database_config['db_prefix'] = DB_PREFIX;
     $database_config['openfood_config'] = 'openfood_config';
   }
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 
 session_start();
 valid_auth('site_admin');

@@ -1,5 +1,5 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 // The purpose of this page is to capture 404 errors when image files are not found
 // and create them so, at least next time, they will be found
 

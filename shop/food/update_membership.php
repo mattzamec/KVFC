@@ -1,5 +1,5 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 valid_auth('member');
 
@@ -18,7 +18,7 @@ else
 // Do we need to post membership changes?
 if (isset ($_POST['update_membership']) && $_POST['update_membership'] == 'true')
   {
-    include_once ('func.check_membership.php');
+    include_once ('includes/func.check_membership.php');
     renew_membership ($_SESSION['member_id'], $_POST['membership_type_id']);
     // Now update our session membership values
     $membership_info = get_membership_info ($_SESSION['member_id']);
@@ -48,7 +48,7 @@ else // if (isset ($_GET['update']) && $_GET['update'] == 'membership')
 // Display the update membership form
 if ($do_update_membership == true)
   {
-    include_once ('func.check_membership.php');
+    include_once ('includes/func.check_membership.php');
     $membership_info = get_membership_info ($_SESSION['member_id']);
     $membership_renewal = check_membership_renewal ($membership_info);
     $membership_renewal_form = membership_renewal_form($membership_info);

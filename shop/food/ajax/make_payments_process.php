@@ -1,5 +1,5 @@
 <?php
-include_once 'config_openfood.php';
+include_once '../includes/config_openfood.php';
 session_start();
 
 
@@ -122,7 +122,7 @@ switch ($_POST['process'])
           // For negative payments received (payments MADE TO members), we will change the source_key to match
           $text_key = 'payment made';
           if ($_POST['amount'] < 0) $text_key = 'payment received';
-          include_once ('func.update_ledger.php');
+          include_once ('../includes/func.update_ledger.php');
           $payment_transaction_id = add_to_ledger (array (
             'transaction_group_id' => $transaction_group_id,
             'source_type' => 'internal',

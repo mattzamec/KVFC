@@ -1,6 +1,6 @@
 <?php
-include_once 'config_openfood.php';
-include_once ('func.get_product.php');
+include_once 'includes/config_openfood.php';
+include_once ('includes/func.get_product.php');
 session_start();
 valid_auth('producer,producer_admin');
 

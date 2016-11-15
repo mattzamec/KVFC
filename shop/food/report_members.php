@@ -1,11 +1,10 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 // This file is used both for member data and producer data so we constrain
 // the permissions by what is being requested
 if ($_REQUEST['p'] == 1) valid_auth('site_admin,producer_admin');
 if ($_REQUEST['p'] == 0) valid_auth('site_admin,member_admin');
-
 
 $wherestatement = '';
 if ( $_REQUEST['p'] == 1 )

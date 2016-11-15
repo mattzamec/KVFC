@@ -1,7 +1,7 @@
 <?php
 // IMPORTANT: Save the posted data before doing anything else
 $received_post_data = file_get_contents('php://input');
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 
 // Use this file for all basic paypal services
 // Be careful when making changes because this must be prepared to process paypal calls at any time.
@@ -133,7 +133,7 @@ if (strlen ($received_post_data) && $not_from_paypal == false)
                 $paypal_message_array['ledger paypal comment'] = 'From: '.$_POST['payer_email'];
                 $effective_datetime = date('Y-m-d H:i:s', strtotime ($_POST['payment_date']));
                 $transaction_group_id = get_new_transaction_group_id ();
-                include_once ('func.update_ledger.php');
+                include_once ('includes/func.update_ledger.php');
                 // First, post the PayPal fee
                 $paypal_transaction_id = add_to_ledger (array (
                   'transaction_group_id' => $transaction_group_id,
@@ -212,7 +212,7 @@ if (strlen ($received_post_data) && $not_from_paypal == false)
             $paypal_message_array['ledger paypal comment'] = 'From: '.$_POST['payer_email'];
             $effective_datetime = date('Y-m-d H:i:s', strtotime ($_POST['payment_date']));
             $transaction_group_id = get_new_transaction_group_id ();
-            include_once ('func.update_ledger.php');
+            include_once ('includes/func.update_ledger.php');
             // First, post the PayPal fee
             $paypal_transaction_id = add_to_ledger (array (
               'transaction_group_id' => $transaction_group_id,

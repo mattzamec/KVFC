@@ -7,7 +7,7 @@
 // You would call this script as an img src tag, e.g.
 // you can do <img src="getdata.php?id=3">
 //
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 
 if ( $_GET['image_id'] )
   {

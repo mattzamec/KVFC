@@ -1,12 +1,10 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 valid_auth('producer,producer_admin');
 
-
 $action = $_POST['action'];
 $content .= '<div style="padding:1em;">';
-
 
 ////////////////////////////////////////////////////////////////////////////////
 ///                                                                          ///

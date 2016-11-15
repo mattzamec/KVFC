@@ -1,5 +1,5 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 valid_auth('member');
 
@@ -10,7 +10,7 @@ include_once ('paypal_utilities.php');
 // Do we need to post membership changes?
 if ($_POST['update_membership'] == 'true')
   {
-    include_once ('func.check_membership.php');
+    include_once ('includes/func.check_membership.php');
     renew_membership ($_SESSION['member_id'], $_POST['membership_type_id']);
     // Now update our session membership values
     $membership_info = get_membership_info ($_SESSION['member_id']);

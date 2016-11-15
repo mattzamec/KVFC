@@ -1,9 +1,9 @@
 <?php
-include_once 'config_openfood.php';
+include_once 'includes/config_openfood.php';
 session_start();
 valid_auth('member');
 
-include_once ('func.get_delivery_codes_list.php');
+include_once ('includes/func.get_delivery_codes_list.php');
 
 // If not the first_call (i.e. after being clicked), tell javascript to close the window.
 if ($_GET['first_call'] != 'true')
