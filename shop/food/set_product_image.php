@@ -1,7 +1,9 @@
 <?php
 include_once 'includes/config_openfood.php';
+include_once 'includes/image_functions.php';
+
 session_start();
-valid_auth('producer,producer_admin');
+valid_auth('producer, producer_admin');
 
 // Use only the producer_id_you
 if ($_SESSION['producer_id_you']) $producer_id = $_SESSION['producer_id_you'];
@@ -18,23 +20,17 @@ if ($_GET['action'] == 'select_image')
     if (isset ($_GET['product_version'])) $product_version_target = mysql_real_escape_string($_GET['product_version']);
     // Find the image being used by this product
     if (isset ($product_id_target) && isset ($product_version_target))
-      {
+    {
         $query = '
-          SELECT
-            '.NEW_TABLE_PRODUCTS.'.image_id,
-            '.NEW_TABLE_PRODUCTS.'.product_name,
-            '.NEW_TABLE_PRODUCTS.'.product_id
-          FROM
-            '.NEW_TABLE_PRODUCTS.'
-          WHERE
-            '.NEW_TABLE_PRODUCTS.'.product_id = "'.$product_id_target.'"
-            AND '.NEW_TABLE_PRODUCTS.'.product_version = "'.$product_version_target.'"';
+          SELECT image_id, product_name
+          FROM '.NEW_TABLE_PRODUCTS.'
+          WHERE product_id = "'.$product_id_target.'"
+          AND product_version = "'.$product_version_target.'"';
         $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 784390 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
         $row = mysql_fetch_array($result);
         $image_id_target = $row['image_id'];
-        $product_id_target = $row['product_id'];
         $product_name_target = $row['product_name'];
-      }
+    }
     $page_content = '
         <fieldset id="options">
           <input type="checkbox" name="select_all_versions" id="select_all_versions">
@@ -68,14 +64,12 @@ if ($_GET['action'] == 'select_image')
           FROM '.NEW_TABLE_PRODUCTS.'
           WHERE '.NEW_TABLE_PRODUCTS.'.image_id = '.TABLE_PRODUCT_IMAGES.'.image_id
         ) AS product_list
-      FROM
-        '.TABLE_PRODUCT_IMAGES.'
-      WHERE
-        '.TABLE_PRODUCT_IMAGES.'.producer_id = "'.mysql_real_escape_string ($producer_id).'"
+      FROM '.TABLE_PRODUCT_IMAGES.'
+      WHERE '.TABLE_PRODUCT_IMAGES.'.producer_id = "'.mysql_real_escape_string ($producer_id).'"
       ORDER BY image_id';
     $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 022967 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
     while ( $row = mysql_fetch_array($result) )
-      {
+    {
         $image_id = $row['image_id'];
         $product_id = $row['product_id'];
         $title = $row['title'];
@@ -92,7 +86,7 @@ if ($_GET['action'] == 'select_image')
               <input id="edit-'.$image_id.'" class="image_edit" type="button" title="Edit this image" value="&#9998;" onclick="popup_src(\''.$_SERVER['SCRIPT_NAME'].'?action=edit_image&image_id='.$image_id.'\', \'upload_image\', \'\')"></input>
               '.(strlen ($product_list) == 0 ? '<input id="delete-'.$image_id.'" class="image_delete" type="button" title="Delete this image" value="&#215;" onclick="delete_image(this,\'set\')" onblur="delete_image(this,\'clear\')"></input>' : '').'
               <input id="select-'.$image_id.'" class="image_select" type="button" title="Select this image" value="&#10004;" onclick="set_image('.$image_id.')"></input>
-              <img src="'.get_image_path_by_id ($image_id).'">
+              '.get_image_tag_by_id($image_id).'
             </div>
           <figcaption>'.$title.'</figcaption>
           </div>';
@@ -208,7 +202,7 @@ elseif ($_REQUEST['action'] == 'edit_image')
                 $page_content .= '
               <h3>Information for image #'.$image_id.'</h3>
               <div class="gallery_image_large">
-                <img src="'.get_image_path_by_id ($image_id).'">
+                '.get_image_tag_by_id($image_id).'
                 <div id="small_size_message">'.$stretch_text.'</div>
               </div>
               <div class="image_info">
@@ -406,26 +400,23 @@ $page_specific_css = '
     /* Default gallery image blocks (not images, but hold the gallery images) */
     .gallery_image {
       position:relative;
-      width:112px;
-      height:112px;
+      width:100px;
+      height:100px;
       border:6px solid rgba(128,128,128,0.2);
-      border-left:3px solid rgba(128,128,128,0.2);
-      border-right:3px solid rgba(128,128,128,0.2);
-      padding:3px;
       color:#aaa;
       cursor:pointer;
       }
     /* Border color of the images during mouseover */
     .gallery_image:hover {
       border:6px solid rgba(128,128,128,0.6);
-      height:118px;
+      height:100px;
       padding:0;
       color:#000;
       }
     /* Border color of the currently-selected image */
     .gallery_image.selected {
       border:6px solid rgba(192,0,0,0.8);
-      height:118px;
+      height:100px;
       padding:0;
       }
     /* Border color of the currently-selected image during mouseover */
@@ -442,8 +433,8 @@ $page_specific_css = '
     /* Appearance of the upload arrow icon */
     .gallery_image .upload_icon {
       position:absolute;
-      width:100%;
-      height:100%;
+      width:100px;
+      height:100px;
       top:0;
       left:0;
       text-align:center;

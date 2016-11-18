@@ -174,10 +174,7 @@ function inventory_display_calc($data)
 // IMAGE_DISPLAY_CALC
 function image_display_calc($data)
 { 
-    return
-    ($data['image_id'] ?
-    '<img src="'.get_image_path_by_id ($data['image_id']).'" width="100" name="img'.$data['image_id'].'" onclick="javascript:img'.$data['image_id'].'.width=300" onMouseOut="javascript:img'.$data['image_id'].'.width=100" hspace="5" border="1" align="left" alt="Click to enlarge '.htmlentities ($data['product_name'], ENT_QUOTES).'">'
-    : '');
+    return ($data['image_id'] ? get_image_tag_by_id ($data['image_id']) : '');
 }
 
 // PRODTYPE_DISPLAY_CALC

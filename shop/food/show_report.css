@@ -55,21 +55,6 @@ table tr td {
   vertical-align:top;
   }
 
-.product_image {
-  float:left;
-  width:100px;
-  margin-right:1em;
-  border:1px solid #000;
-  }
-.product_image:hover {
-  width:300px;
-  position:absolute;
-  -moz-transition: width 1s ease;
-  -ms-transition: width 1s ease;
-  -o-transition: width 1s ease;
-  transition: width 1s ease;
-  -webkit-transition: width 1s ease;
-  }
 #show_report_table {
   border-collapse: collapse;
   width:100%;

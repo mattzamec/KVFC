@@ -238,28 +238,6 @@ function convert_route_code($route_code_info)
     return $route_code;
   }
 
-function get_image_path_by_id ($image_id)
-  {
-    // Do we want to send images directly from image files?
-    if (SERVE_FILE_IMAGES == true)
-      {
-        $src = PRODUCT_IMAGE_PATH.'img'.PRODUCT_IMAGE_SIZE.'-'.$image_id.'.png';
-        // This could be a good place to pre-generate any images that are about to be requested
-        // NOT IMPLEMENTED
-      }
-    // ... or from the database while creating new image files on the fly?
-    elseif (CREATE_IMAGE_FILES == true)
-      {
-        $src = PATH.'get_image.php?image_id='.$image_id;
-      }
-    // ... or use the legacy system to access the dabase directly and nothing more.
-    else
-      {
-        $src = PATH.'getimage.php?image_id='.$image_id;
-      }
-    return $src;
-  }
-
 // Helper function to return a prior/next delivery navigation element, depending on whether the deliveries exist
 if (!function_exists('delivery_nav'))
 {
@@ -457,16 +435,6 @@ function nl2br2($text)
 function br2nl($text)
   {
     return preg_replace('/<br\\s*?\/??>/i', "\n", $text);
-  }
-
-// For php < 5.4 need to create this function:
-if (!function_exists('getimagesizefromstring'))
-  {
-    function getimagesizefromstring($string_data)
-      {
-        $uri = 'data://application/octet-stream;base64,'  . base64_encode($string_data);
-        return getimagesize($uri);
-      }
   }
 
 // GENERATES A MICROSOFT/WINDOWS-SAFE CSV FILE

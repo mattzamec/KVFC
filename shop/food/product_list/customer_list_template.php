@@ -121,10 +121,7 @@ function inventory_display_calc($data)
 // IMAGE_DISPLAY_CALC
 function image_display_calc($data)
 { 
-    return
-        ($data['image_id'] ?
-        '<img src="'.get_image_path_by_id ($data['image_id']).'" class="product_image">'
-        : '');
+    return ($data['image_id'] ? get_image_tag_by_id ($data['image_id']) : '');
 }
 
 // PRODTYPE_DISPLAY_CALC

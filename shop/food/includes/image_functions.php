@@ -1,5 +1,5 @@
 <?php
- 
+
 /*
 * File: SimpleImage.php
 * Author: Simon Jarvis
@@ -99,4 +99,61 @@ class SimpleImage {
       $this->image = $new_image;
    }
 }
-?>
+
+// This function returns an <img> HTML tag with the the path to the image file in the product images folder.
+// If the image does not exist, it is retrieved from the database, resized, and saved.
+// If the function was not able to create an image file, it returns a bogus empty img tag with the reason
+// for failure in the alt attribute.
+function get_image_tag_by_id ($image_id)
+{
+    global $connection;
+    
+    // First check to see if the image exists as a file
+    $file = PRODUCT_IMAGE_PATH.'img'.PRODUCT_IMAGE_SIZE.'-'.$image_id.'.png';
+    $image_error = '';
+    
+    if (!file_exists(FILE_PATH.$file)) 
+    {
+        // If the image does not exist, then get it from the database
+        $query = '
+          SELECT *
+          FROM '.TABLE_PRODUCT_IMAGES.'
+          WHERE image_id = "'.$image_id.'"';
+        $result = @mysql_query($query, $connection);
+        if (!$result) 
+        {
+            debug_print ("ERROR: 785922 ", array ($query, mysql_error()), basename(__FILE__).' LINE '.__LINE__);
+            $image_error = 'No image ID '.$image_id . ' found in ' . TABLE_PRODUCT_IMAGES;
+        }
+
+        if (!$image_error) 
+        {
+            $row = mysql_fetch_array($result);
+
+            $image = new SimpleImage();
+            $image->load_data($row['image_content']);
+            // If we don't have a width or height for this image in the database, then save it now.
+            if ($row['width'] == 0 || $row['height'] == 0)
+            {
+                $image_info = getimagesizefromstring($row['image_content']);
+                $original_width = $image_info[0];
+                $original_height = $image_info[1];
+                $query = '
+                  UPDATE '.TABLE_PRODUCT_IMAGES.'
+                  SET width = "'.$original_width.'",
+                    height = "'.$original_height.'"
+                  WHERE image_id = "'.mysql_real_escape_string($_GET['image_id']).'"';
+                $result = @mysql_query($query, $connection);     // We don't particularly care if the update fails
+            }
+            $image->resizeDownToWidthHeight(PRODUCT_IMAGE_SIZE);
+            $image->save(FILE_PATH.$file, IMAGETYPE_PNG);
+        }
+    }
+    
+    if (!$image_error && !file_exists($file))
+    {
+        $image_error = 'Could not create file ' . $file . 'for image ID ' . $image_id;
+    }
+
+    return '<img src="'.(file_exists(FILE_PATH.$file) ? $file : '#').'" class="product_image" alt="'.($image_error ? $image_error : '').'" title="Hold down mouse button to enlarge">';
+}
