@@ -164,7 +164,7 @@ if ($inventory_id && ($action == 'add' || $action == 'sub'))
 {
     $query = '
       UPDATE '.TABLE_INVENTORY.'
-      SET quantity = quantity '.($action == 'add' ? '+ ' : '- ').mysql_real_escape_string ($inventory_pull).'
+      SET quantity = quantity '.($action == 'add' ? '- ' : '+ ').mysql_real_escape_string ($inventory_pull).'
       WHERE inventory_id = '.mysql_real_escape_string ($inventory_id);
     $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 066934 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
 }
