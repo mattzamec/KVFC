@@ -148,13 +148,13 @@ $query = '
   LEFT JOIN '.TABLE_INVENTORY.' ON '.NEW_TABLE_PRODUCTS.'.inventory_id = '.TABLE_INVENTORY.'.inventory_id
   LEFT JOIN '.TABLE_PRODUCT_STORAGE_TYPES.' ON '.NEW_TABLE_PRODUCTS.'.storage_id = '.TABLE_PRODUCT_STORAGE_TYPES.'.storage_id
   LEFT JOIN '.NEW_TABLE_BASKET_ITEMS.' ON '.NEW_TABLE_BASKET_ITEMS.'.product_id = '.NEW_TABLE_PRODUCTS.'.product_id AND '.NEW_TABLE_BASKET_ITEMS.'.basket_id = "'.mysql_real_escape_string((new CurrentBasket())->basket_id()).'"
-  LEFT OUTER JOIN '.NEW_TABLE_PRODUCTS.' '.NEW_TABLE_PRODUCTS.'2
-    ON ('.NEW_TABLE_PRODUCTS.'.product_id = '.NEW_TABLE_PRODUCTS.'2.product_id
+  LEFT OUTER JOIN '.NEW_TABLE_PRODUCTS.' products2
+    ON ('.NEW_TABLE_PRODUCTS.'.product_id = products2.product_id
       AND IF(FIELD('.NEW_TABLE_PRODUCTS.'.confirmed, -1, 1) = 0, '.NEW_TABLE_PRODUCTS.'.product_version, FIELD('.NEW_TABLE_PRODUCTS.'.confirmed, -1, 1) + 999999)
       <
-      IF(FIELD('.NEW_TABLE_PRODUCTS.'2.confirmed, -1, 1) = 0, '.NEW_TABLE_PRODUCTS.'2.product_version, FIELD('.NEW_TABLE_PRODUCTS.'2.confirmed, -1, 1) + 999999))
+      IF(FIELD(products2.confirmed, -1, 1) = 0, products2.product_version, FIELD(products2.confirmed, -1, 1) + 999999))
   WHERE
-    '.NEW_TABLE_PRODUCTS.'2.product_id IS NULL'.
+    products2.product_id IS NULL'.
     $where_producer_pending.
     $where_misc.
     $where_zero_inventory.
@@ -163,5 +163,3 @@ $query = '
   GROUP BY product_id
   ORDER BY'.
     $order_by;
-
-?>
