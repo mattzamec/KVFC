@@ -220,12 +220,13 @@ function order_cycle_navigation($data)
       ($_GET['query'] ? '&query='.$_GET['query'] : '').
       ($_GET['a'] ? '&a='.$_GET['a'] : '');
 
-    $delivery_id = $_GET['delivery_id'] ? $_GET['delivery_id'] : (new ActiveCycle())->delivery_id();
+    $order_cycle = $_GET['delivery_id'] ? new SpecificCycle($_GET['delivery_id']) : new ActiveCycle();
+    
     return
     '<div id="delivery_id_nav">
-    <a class="prior" href="'.$_SERVER['SCRIPT_NAME'].'?delivery_id='.($delivery_id - 1).$http_get_query.'">&larr; PRIOR ORDER </a>
-    <span class="delivery_id">'.date(DATE_FORMAT_CLOSED, strtotime((new SpecificCycle($delivery_id))->delivery_date())).'</span>
-    <a class="next" href="'.$_SERVER['SCRIPT_NAME'].'?delivery_id='.($delivery_id + 1).$http_get_query.'"> NEXT ORDER &rarr;</a>
+    '.($order_cycle->exists_prior() ? '<a class="prior" href="'.$_SERVER['SCRIPT_NAME'].'?delivery_id='.($order_cycle->delivery_id() - 1).$http_get_query.'">&larr; PRIOR ORDER </a>' : '').'
+    <span class="delivery_id">'.date(DATE_FORMAT_CLOSED, strtotime($order_cycle->delivery_date())).'</span>
+    '.($order_cycle->exists_next()  ? '<a class="next" href="'.$_SERVER['SCRIPT_NAME'].'?delivery_id='.($order_cycle->delivery_id() + 1).$http_get_query.'"> NEXT ORDER &rarr;</a>' : '').'
   </div>';
   };
 

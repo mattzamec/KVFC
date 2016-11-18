@@ -18,6 +18,8 @@ abstract class OrderCycle
     protected $wholesale_markup = false;
     protected $is_open_for_ordering = false;
     protected $is_open_for_fulfillment = false;
+    protected $exists_next = false;
+    protected $exists_prior = false;    
 
     // Constructor will run the query for the appropriate $prm_where_clause and $prm_order_by supplied
     // and assign properties
@@ -32,16 +34,18 @@ abstract class OrderCycle
         //if (CurrentMember::auth_type('institution')) $customer_type_query .= '
         //    OR customer_type LIKE "%institution%"';
 
-        // Run the query
-        // debug_print('INFO: RUNNING QUERY in OrderCycle constructor for WHERE clause '.$prm_where_clause.'; class is '.get_class($this));
-
         $query = '
-        SELECT *
+        SELECT *,
+	    IFNULL((SELECT 1 FROM '.TABLE_ORDER_CYCLES.' PriorCycle WHERE PriorCycle.delivery_id = '.TABLE_ORDER_CYCLES.'.delivery_id - 1), 0) AS `exists_prior`,
+	    IFNULL((SELECT 1 FROM '.TABLE_ORDER_CYCLES.' NextCycle  WHERE NextCycle.delivery_id  = '.TABLE_ORDER_CYCLES.'.delivery_id + 1), 0) AS `exists_next`
         FROM '.TABLE_ORDER_CYCLES.'
         WHERE '.$prm_where_clause.'
         ORDER BY '.$prm_order_by.'
         LIMIT 1';
         $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 730099 ", array ($query, mysql_error()), basename(__FILE__).' LINE '.__LINE__));
+
+        // Run the query
+        // debug_print('INFO: RUNNING QUERY ' . $query . ' in OrderCycle constructor for WHERE clause '.$prm_where_clause.'; class is '.get_class($this));
 
         if ($row = mysql_fetch_object ($result))
         {
@@ -59,6 +63,8 @@ abstract class OrderCycle
             $this->wholesale_markup = $row->wholesale_markup / 100;
             $this->is_open_for_ordering = (time() > strtotime ($row->date_open) && time() < strtotime ($row->date_closed));
             $this->is_open_for_fulfillment = (time() > strtotime ($row->date_closed) && time() < strtotime ($row->order_fill_deadline));
+            $this->exists_next = $row->exists_next;
+            $this->exists_prior = $row->exists_prior;
         }
         else
         {    // Set defaults in case nothing was retrieved
@@ -74,7 +80,10 @@ abstract class OrderCycle
                 $this->producer_markdown = 
                 $this->retail_markup = 
                 $this->wholesale_markup = 0;
-            $this->is_open_for_ordering =  $this->is_open_for_fulfillment = false;
+            $this->is_open_for_ordering = 
+                $this->is_open_for_fulfillment = 
+                $this->exists_next = 
+                $this->exists_prior = false;
         }
     }
 
@@ -134,6 +143,14 @@ abstract class OrderCycle
     public function is_open_for_fulfillment()
     {
         return $this->is_open_for_fulfillment;
+    }
+    public function exists_next()
+    {
+        return $this->exists_next;
+    }
+    public function exists_prior()
+    {
+        return $this->exists_prior;
     }
 }
 
