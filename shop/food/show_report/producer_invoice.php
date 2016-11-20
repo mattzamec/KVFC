@@ -147,7 +147,7 @@ $query_product = '
   LEFT JOIN '.TABLE_PRODUCT_STORAGE_TYPES.' USING(storage_id)
   LEFT JOIN '.NEW_TABLE_MESSAGES.' messages1 ON
     ( messages1.referenced_key1 = '.NEW_TABLE_BASKET_ITEMS.'.bpid
-    AND messages11.message_type_id =
+    AND messages1.message_type_id =
       (SELECT message_type_id FROM '.NEW_TABLE_MESSAGE_TYPES.' WHERE description = "customer notes to producer")
     )
   LEFT JOIN '.NEW_TABLE_MESSAGES.' messages2 ON
