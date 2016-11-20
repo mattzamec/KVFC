@@ -132,8 +132,8 @@ $query_product = '
     '.TABLE_PRODUCT_TYPES.'.prodtype,
     '.TABLE_PRODUCT_STORAGE_TYPES.'.storage_type,
     '.TABLE_PRODUCT_STORAGE_TYPES.'.storage_code,
-    '.NEW_TABLE_MESSAGES.'1.message AS customer_message,
-    '.NEW_TABLE_MESSAGES.'2.message AS product_message
+    messages1.message AS customer_message,
+    messages2.message AS product_message
   FROM
     '.NEW_TABLE_LEDGER.'
   LEFT JOIN '.NEW_TABLE_PRODUCTS.' USING(pvid)
@@ -145,14 +145,14 @@ $query_product = '
   LEFT JOIN '.TABLE_CATEGORY.' USING(category_id)
   LEFT JOIN '.TABLE_PRODUCT_TYPES.' USING(production_type_id)
   LEFT JOIN '.TABLE_PRODUCT_STORAGE_TYPES.' USING(storage_id)
-  LEFT JOIN '.NEW_TABLE_MESSAGES.' '.NEW_TABLE_MESSAGES.'1 ON
-    ( '.NEW_TABLE_MESSAGES.'1.referenced_key1 = '.NEW_TABLE_BASKET_ITEMS.'.bpid
-    AND '.NEW_TABLE_MESSAGES.'1.message_type_id =
+  LEFT JOIN '.NEW_TABLE_MESSAGES.' messages1 ON
+    ( messages1.referenced_key1 = '.NEW_TABLE_BASKET_ITEMS.'.bpid
+    AND messages11.message_type_id =
       (SELECT message_type_id FROM '.NEW_TABLE_MESSAGE_TYPES.' WHERE description = "customer notes to producer")
     )
-  LEFT JOIN '.NEW_TABLE_MESSAGES.' '.NEW_TABLE_MESSAGES.'2 ON
-    ( '.NEW_TABLE_MESSAGES.'2.referenced_key1 = '.NEW_TABLE_LEDGER.'.transaction_id
-    AND '.NEW_TABLE_MESSAGES.'2.message_type_id =
+  LEFT JOIN '.NEW_TABLE_MESSAGES.' messages2 ON
+    ( messages2.referenced_key1 = '.NEW_TABLE_LEDGER.'.transaction_id
+    AND messages2.message_type_id =
       (SELECT message_type_id FROM '.NEW_TABLE_MESSAGE_TYPES.' WHERE description = "ledger_comment")
     )
   WHERE
