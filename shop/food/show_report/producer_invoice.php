@@ -242,7 +242,7 @@ $query_adjustment = '
     '.NEW_TABLE_MESSAGES.'.message AS ledger_message
   FROM
     '.NEW_TABLE_LEDGER.'
-  LEFT JOIN '.NEW_TABLE_MESSAGES.' '.NEW_TABLE_MESSAGES.' ON
+  LEFT JOIN '.NEW_TABLE_MESSAGES.' ON
     ( '.NEW_TABLE_MESSAGES.'.referenced_key1 = '.NEW_TABLE_LEDGER.'.transaction_id
     AND '.NEW_TABLE_MESSAGES.'.message_type_id =
       (SELECT message_type_id FROM '.NEW_TABLE_MESSAGE_TYPES.' WHERE description = "ledger_comment")
