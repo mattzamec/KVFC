@@ -483,14 +483,15 @@ function show_listing_row($data, $row_type)
           '.$data['product_description'].'
           '.($data['is_wholesale_item'] ? wholesale_text_html() : '').'
         </div>
-      <div id="message_area'.$data['product_id'].'X'.$data['product_version'].'"'.($data['basket_quantity'] == 0 ? ' style="display:none;"' : '').'>
-        <textarea class="message" id="message'.$data['product_id'].'" name="message" placeholder="Optional message to producer...">'.
-          $data['customer_message'].
-        '</textarea>
-        <div class="message_button" id="message_button'.$data['product_id'].'X'.$data['product_version'].'" onclick="AddToCart('.$data['product_id'].','.$data['product_version'].',\'message\'); return false;">'.
-          ($data['checked_out'] ? '' : '
-          <img alt="save message" src="'.DIR_GRAPHICS.'message.png">
-          <div class="thumb_descr">Update<br>Message</div>' ). '
+        <div id="message_area'.$data['product_id'].'X'.$data['product_version'].'"'.($data['basket_quantity'] == 0 ? ' style="display:none;"' : '').'>
+          <textarea class="message" id="message'.$data['product_id'].'" name="message" placeholder="Optional message to producer...">'.
+            $data['customer_message'].
+          '</textarea>
+          <div class="message_button" id="message_button'.$data['product_id'].'X'.$data['product_version'].'" onclick="AddToCart('.$data['product_id'].','.$data['product_version'].',\'message\'); return false;">'.
+            ($data['checked_out'] ? '' : '
+            <img alt="save message" src="'.DIR_GRAPHICS.'message.png">
+            <div class="thumb_descr">Update<br>Message</div>' ). '
+          </div>
         </div>
       </td>
       <td class="business">

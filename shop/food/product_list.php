@@ -660,10 +660,18 @@ function AddToCart (product_id, product_version, action) {
         document.getElementById("in_basket" + product_id + "X" + product_version).style.display = "none";
         if (elem = document.getElementById("message_area" + product_id + "X" + product_version)) elem.style.display = "none";
     }
-    if (checked_out == 1) {
-      document.getElementById("checkout" + product_id + "X" + product_version).innerHTML = "<input type=\"image\"class=\"checkout_check\" src=\"'.DIR_GRAPHICS.'checkout-ccs.png\" onclick=\"AddToCart("+product_id+","+product_version+",\'no_checkout\'); return false;\"><span class=\"checkout_text\">Ordered!</span>";
-      document.getElementById("message_button" + product_id + "X" + product_version).innerHTML = "";
-      document.getElementById("activity" + product_id + "X" + product_version).innerHTML = "";
+    if (checked_out == 1) {    // item checkout
+        $("#checkout" + product_id + "X" + product_version).html("<img class=\"checkout_check\" src=\"'.DIR_GRAPHICS.'checkout-ccs.png\"><span class=\"checkout_text\">Ordered!</span>");
+        $("#message_button" + product_id + "X" + product_version).empty();
+        $("#activity" + product_id + "X" + product_version).text(new_quantity + " in basket");
+    }
+    else if (checked_out == 2)   {    // basket checkout
+        // Show basket checked out image
+        $("div[id^=\"checkout_basket\"]").html("<img class=\"checkout_check\" src=\"'.DIR_GRAPHICS.'checkout-ccs.png\"><span class=\"checkout_text\">Checked out</span>");
+        // Show checked out image for all items
+        $("tr[id^=\"X\"] div.checkout").html("<img class=\"checkout_check\" src=\"'.DIR_GRAPHICS.'checkout-ccs.png\"><span class=\"checkout_text\">Ordered!</span>");
+        $("div.message_button").empty();
+        $("td[id^=\"activity\"]").has(".basket_qty").each(function() { $(this).html($(this).find(".basket_qty").html() + " in basket "); });
     }
 
     // Update the basket item count

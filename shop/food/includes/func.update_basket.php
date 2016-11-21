@@ -277,6 +277,7 @@ debug_print ("INFO: 892573 ", $query_update_basket, basename(__FILE__).' LINE '.
               ));
             if (! is_array($basket_item_info))
               {
+                $basket_info['checked_out'] = 0;
                 die(debug_print ("ERROR: 902784 ", 'update_basket_item() did not return array.', basename(__FILE__).' LINE '.__LINE__));
               }
           }

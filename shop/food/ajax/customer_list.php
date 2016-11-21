@@ -26,8 +26,6 @@ $message = $_POST['message'];
 // Abort the operation if we do not have important information
 if (!$delivery_id ||
     !$member_id ||
-    !$product_id ||
-    !$product_version ||
     !$action)
 {
     die(debug_print ("ERROR: 545721 ", 'Call without necessary information.', basename(__FILE__).' LINE '.__LINE__));
@@ -50,6 +48,30 @@ if (!$basket_id || $basket_id <= 0)
 if (!$basket_id || $basket_id <= 0)
 {
     die(debug_print ("ERROR: 545722 ", 'Cannot continue without basket ID.', basename(__FILE__).' LINE '.__LINE__));
+}
+
+// If we're checking out the whole basket, do it now and return
+$checkout = 0;   // will be set to 1 for item checkout, or 2 for basket checkout
+if ($action == 'checkout_basket')
+{
+    // Check out the whole basket
+    $basket_info = update_basket(array(
+      'basket_id' => $basket_id,
+      'delivery_id' => $delivery_id,
+      'member_id' => $member_id,
+      'action' => 'checkout'
+      ));
+    if (!$non_ajax_query)
+    {
+        echo '0:0:'.($basket_info['checked_out'] != 0 ? '2' : '0');
+    }
+    return;
+}
+
+// At this point we need to make sure we have product information (if we're doing anything other than checking out a basket)
+if (!$product_id || !$product_version)
+{
+    die(debug_print ("ERROR: 545725 ", 'Call without necessary information.', basename(__FILE__).' LINE '.__LINE__));
 }
 
 // Make sure the quantity we think is in the basket is the quantity that really is in the basket
@@ -211,22 +233,16 @@ if ($action == 'checkout')
       'product_id' => $product_id,
       'product_version' => $product_version,
       'messages' => $message
-      ));
-}
-if ($action == 'checkout_basket')
-{
-    // Check out the whole basket
-    $basket_info = update_basket(array(
-      'basket_id' => $basket_id,
-      'delivery_id' => $delivery_id,
-      'member_id' => $member_id,
-      'action' => 'checkout'
-      ));
+    ));
+    if ($basket_item_info['checked_out'] != 0) 
+    {
+        $checkout = 1;
+    }
 }
 
 // The following is necessary because this is also called when javascript/ajax is turned off and
 // we don't want to send extraneous data back to the output page.
 if (!$non_ajax_query)
 {
-    echo number_format($basket_quantity, 0).':'.number_format($inventory_quantity, 0).':'.$alert;
+    echo number_format($basket_quantity, 0).':'.number_format($inventory_quantity, 0).':'.$checkout.':'.$alert;
 }
