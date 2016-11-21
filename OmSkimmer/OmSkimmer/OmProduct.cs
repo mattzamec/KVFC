@@ -7,10 +7,7 @@ namespace OmSkimmer
     {
         #region Properties
 
-        [JsonConverter(typeof(BoolConverter))]
-        public Boolean success { get; set; }
-
-        public OmProductDetail details { get; set; }
+        public OmProductData data { get; set; }
 
         #endregion Properties
 
@@ -18,54 +15,118 @@ namespace OmSkimmer
 
         public OmProduct()
         {
-            this.success = false;
-            this.details = new OmProductDetail();
+            this.data = new OmProductData();
         }
 
         #endregion Constructor
     }
 
-    public class OmProductDetail
+    public class OmProductData
     {
-                            // {"success":1,"details":{"purchasable":true,"sku":"N100-25","instock":true,"unformattedPrice":"362.5","base":false,
-                            //"baseImage":"http:\/\/cdn2.bigcommerce.com\/server400\/b83eb\/products\/646\/images\/1026\/ALMONDS__23360.1426194866.1000.1200.jpg?c=2",
-                            //"baseThumb":"http:\/\/cdn2.bigcommerce.com\/server400\/b83eb\/products\/646\/images\/1026\/ALMONDS__23360.1426194866.490.490.jpg?c=2",
-                            //"image":"http:\/\/cdn2.bigcommerce.com\/server400\/b83eb\/products\/646\/images\/1026\/ALMONDS__23360.1426194866.1000.1200.jpg?c=2",
-                            //"thumb":"http:\/\/cdn2.bigcommerce.com\/server400\/b83eb\/products\/646\/images\/1026\/ALMONDS__23360.1426194866.490.490.jpg?c=2",
-                            //"price":"$362.50","rrp":"$0.00","unformattedRrp":0,"priceLabel":"Price:"}}
+// {
+//  "data": {
+//      "purchasable":false,
+//      "purchasing_message":"Out of Stock",
+//      "sku":null,
+//      "upc":null,
+//      "stock":null,
+//      "instock":true,
+//      "stock_message":null,
+//      "price":{
+//          "without_tax":{
+//              "formatted":"$327.50",
+//              "value":327.5
+//          },
+//          "tax_label":"Tax"
+//      },
+//      "weight":null,
+//      "base":false,
+//      "image":null,
+//      "variantId":1230
+//  }
+// }
+
         #region Properties
 
         public Boolean purchasable { get; set; }
+        public String purchasing_message { get; set; }
         public String sku { get; set; }
+        public String upc { get; set; }
+        public String stock { get; set; }
         public Boolean instock { get; set; }
-        public Decimal unformattedPrice { get; set; }
-        public String baseImage { get; set; }
-        public String baseThumb { get; set; }
-        public String image { get; set; }
-        public String thumb { get; set; }
-        public String price { get; set; }
-        public String rrp { get; set; }
-        public Decimal unformattedRrp { get; set; }
-        public String priceLabel { get; set; }
+        public String stock_message { get; set; }
+        public Int32 variantId { get; set; }
+        public OmPrice price { get; set; }
 
         #endregion Properties
 
         #region Constructor
 
-        public OmProductDetail()
+        public OmProductData()
         {
             this.purchasable = false;
+            this.purchasing_message = String.Empty;
             this.sku = String.Empty;
+            this.upc = String.Empty;
+            this.stock = String.Empty;
             this.instock = false;
-            this.unformattedPrice = 0.00m;
-            this.baseImage = String.Empty;
-            this.baseThumb = String.Empty;
-            this.image = String.Empty;
-            this.thumb = String.Empty;
-            this.price = String.Empty;
-            this.rrp = String.Empty;
-            this.unformattedRrp = 0.00m;
-            this.priceLabel = String.Empty;
+            this.stock_message = String.Empty;
+            this.variantId = -1;
+            this.price = null;
+        }
+
+        #endregion Constructor
+    }
+
+    public class OmPrice
+    {
+        //      "price":{
+        //          "without_tax":{
+        //              "formatted":"$327.50",
+        //              "value":327.5
+        //          },
+        //          "tax_label":"Tax"
+        //      },
+        #region Properties
+
+        public OmPriceDetails without_tax { get; set; }
+        public String tax_label { get; set; }
+
+        #endregion Properties
+
+        #region Constructor
+
+        public OmPrice()
+        {
+            this.without_tax = null;
+            this.tax_label = String.Empty;
+        }
+
+        #endregion Constructor        
+    }
+
+    public class OmPriceDetails
+    {
+        //      "price":{
+        //          "without_tax":{
+        //              "formatted":"$327.50",
+        //              "value":327.5
+        //          },
+        //          "tax_label":"Tax"
+        //      },
+        #region Properties
+
+        public String formatted { get; set; }
+        public Decimal value { get; set; }
+
+        #endregion Properties
+
+        #region Constructor
+
+        public OmPriceDetails()
+        {
+            this.formatted = String.Empty;
+            this.value = 0.00m;
         }
 
         #endregion Constructor

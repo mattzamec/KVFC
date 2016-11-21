@@ -190,10 +190,10 @@ namespace OmSkimmer
 
         private void WriteProductsToCsv(List<Product> productList)
         {
-            foreach (Product product in productList.OrderBy(p => p.Sku))
+            foreach (Product product in productList.OrderBy(p => p.Category).ThenBy(p => p.Name))
             {
-                this.CsvStream.WriteLine("{0}, {1}{2}{3}, {4}, {5}",
-                    product.Sku.Replace(',', '?'), product.Name.Replace(',', '?'),
+                this.CsvStream.WriteLine("{0}, {1}, {2}{3}{4}, {5}, {6}",
+                    product.OmId, product.VariantId, product.Name.Replace(',', '?'),
                     String.IsNullOrEmpty(product.Size) ? String.Empty : " ", product.Size.Replace(',', '?'), product.Price.ToString("C"),
                     product.IsInStock ? "In stock" : "OUT OF STOCK");
             }
@@ -201,11 +201,11 @@ namespace OmSkimmer
 
         private void WriteProductsToSql(List<Product> productList)
         {
-            foreach (Product product in productList.OrderBy(p => p.Sku))
+            foreach (Product product in productList.OrderBy(p => p.OmId).ThenBy(p => p.VariantId))
             {
                 this.SqlStream.WriteLine("CALL {0}('{1}', '{2}', '{3}', '{4}', {5}, '{6}', '{7}', {8});",
                     ConfigurationManager.AppSettings["SqlProcName"],
-                    product.Sku, product.Name, product.Description.Replace("'", "''"), product.Category, product.Price,
+                    String.Format("{0}_{1}", product.OmId, product.VariantId), product.Name, product.Description.Replace("'", "''"), product.Category, product.Price,
                     product.Size, this.startDate.ToString("yyyy-MM-dd HH:mm:ss"), product.IsInStock ? "0" : "1");
             }
             // Proc parameters:

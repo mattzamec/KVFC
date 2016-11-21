@@ -16,17 +16,16 @@ namespace OmSkimmer
         private Boolean disposed = false;
         private readonly Int32 numberToProcess = 0;
 
-        private const String OmSiteRoot = @"http://www.omfoods.com/organic-bulk-food";
-        private const String CategoryClassName = @"SideCategoryListFlyout";
-        private const String ProductMainDivClassName = @"ProductMain";
-        private const String SkuSpanItemprop = @"sku";
-        private const String NameH1Itemprop = @"name";
-        private const String ProductClassName = @"ProductDetails";
-        private const String SizeDivClassName = @"productOptionViewRadio";
-        private const String PriceClassName = @"PriceRow";
-        private const String PriceMetaItemprop = @"price";
-        private const String ProductDescriptionClassName = @"ProductDescriptionContainer";
-        private const String OutOfStockHack = @"$(""#ProductDetails"").updateProductDetails({""purchasable"":false,""purchasingMessage"":""Out of Stock""";
+        private const String OmSiteRoot = @"http://www.omfoods.com";
+        private const String MainNavSectionClassName = "main-nav-bar";
+        private const String CategoryClassName = "has-children";
+        private const String ProductClassName = "product-item-title";
+        private const String ProductDescriptionClassName = "product-description";
+        private const String MainProductSectionAttribute = "data-product-container";
+        private const String ProductIdAttribute = "data-product-id";
+        private const String SizeDivAttribute = "data-product-option-change";
+        private const String SingleSizePriceDivClassName = "product-price";
+        private const String SingleSizePriceDetailSpanClassName = "price-value";
 
         private readonly Logger logger;
 
@@ -64,17 +63,27 @@ namespace OmSkimmer
                     return;
                 }
 
-                // Get the category nodes - this should be a single div with a class attribute containing CategoryClassName
-                List<HtmlNode> categoryNodeList = this.GetDescendantListByClassName(mainPage.DocumentNode, "div", CategoryClassName);
+                // Get the product nodes. These will be sucked out of the main menu.
+                // The main menu is a list (<ul>) of "main" links. All of these except for "Products" are simple links without sub-links.
+                // "Products" contains a child list (<ul>) of main category items. Each main category item is a list item (<li>) with a class "has-children".
+                // The main category <li> element contains an anchor tag <a> pointing to the main category page, and another nested list (<ul>)
+                // whose items contain links to subcategory pages.
+                HtmlNode mainNavNode = this.GetSingleDescendantByTypeAndAttribute(mainPage.DocumentNode, "section", "class", MainNavSectionClassName);
+                if (mainNavNode == null)
+                {
+                    this.logger.WriteLineToConsoleAndLogFile("Cannot locate main navigation section containing product links; aborting mission.");
+                    return;
+                }
 
+                List<HtmlNode> categoryNodeList = this.GetDescendantListByClassName(mainNavNode, "li", CategoryClassName);
                 this.logger.WriteToConsoleAndLogFile("Found {0} category node(s) ", categoryNodeList.Count);
                 if (!categoryNodeList.Any())   // If we have no categories, there's nothing we can do ...
                 {
                     this.logger.BlankLineInConsoleAndLogFile();
                     return;
                 }
-
-                // Parse out the URLs from the anchor tags in the category div
+                
+                // Parse out the URLs from all the anchor tags in the category list items
                 // This will be a list of string Tuples, where Item1 is the inner text, and Item2 is the URL
                 List<Tuple<String, String>> categoryTupleList = this.GetUrlAndNameFromAnchors(categoryNodeList);
 
@@ -114,8 +123,8 @@ namespace OmSkimmer
                         continue;
                     }
 
-                    // Get the product detail nodes. There should be a bunch of them. These are divs with class attribute containing ProductClassName
-                    List<HtmlNode> productNodeList = this.GetDescendantListByClassName(categoryPage.DocumentNode, "div", ProductClassName);
+                    // Get the product detail nodes. There should be a bunch of them. These are h5s with class attribute containing ProductClassName
+                    List<HtmlNode> productNodeList = this.GetDescendantListByClassName(categoryPage.DocumentNode, "h5", ProductClassName);
 
                     this.logger.WriteLineToConsoleAndLogFile("Found {0} product node(s) for {1}", productNodeList.Count, categoryTuple.Item1);
                     if (!productNodeList.Any())   // There really should be product divs on each category page - but if we can't get them, there's nothing to do ...
@@ -156,27 +165,33 @@ namespace OmSkimmer
                         }
 
                         // Drill down to the product information.
-                        // There should be a div of class ProductMainDivClassName containing all the product information. Let's make sure there is
-                        HtmlNode productMainNode = this.GetDescendantListByClassName(productPage.DocumentNode, "div",
-                            ProductMainDivClassName).FirstOrDefault();                       
+                        // There should be a single section of containing an attribute MainProductSectionAttribute. Let's make sure there is
+                        HtmlNode productMainNode = this.GetSingleDescendantByTypeWithAttribute(
+                            productPage.DocumentNode, "section", MainProductSectionAttribute); 
                         if (productMainNode == null)    // if we can't find the main product div, move on, there's nothing we can do
                         {
-                            this.logger.WriteLineToLogFile("Main product div not found.");
+                            this.logger.WriteLineToLogFile("Main product section not found.");
                             continue;
                         }
                         
                         // Product description is the HTML content of the appropriate div on the main product page
                         String productDescription = this.GetProductDescription(productPage);
 
-                        // Organic Matters product ID can come from several places on the page; a hidden input seems to be a good place
-                        Int32 productId = this.GetOmProductId(productMainNode);
+                        // Let's get the product ID from an attribute of the main product section
+                        String productIdValue = this.GetAttributeValueByName(productMainNode, ProductIdAttribute);
+                        Int32 productId;
+                        if (String.IsNullOrEmpty(productIdValue) || !Int32.TryParse(productIdValue, out productId))
+                        {
+                            this.logger.WriteLineToLogFile("Unable to parse product ID from the page contents.");
+                            continue;
+                        }
 
                         // OK. Now let's see if there are any radio buttons for different sizes
-                        HtmlNode sizeRadioMainDivNode = this.GetDescendantListByClassName(productMainNode, "div", SizeDivClassName, true).FirstOrDefault();
+                        HtmlNode sizeRadioMainDivNode = this.GetSingleDescendantByTypeWithAttribute(productMainNode, "div", SizeDivAttribute);
                         List<HtmlNode> sizeRadioNodeList = sizeRadioMainDivNode == null ? new List<HtmlNode>() :
                             this.GetDescendantListByTypeAndAttribute(sizeRadioMainDivNode, "input", "type", "radio", true);
 
-                        // If we have size radio buttons,, we'll hit the remote.php AJAX page with the appropriate arguments and parse each price and availability from JSON response.
+                        // If we have size radio buttons, we'll hit the remote.php AJAX page with the appropriate arguments and parse each price and availability from JSON response.
                         // If there are not, we'll parse the price and availability from the page and that's all we got
                         if (sizeRadioNodeList.Any())
                         {
@@ -188,12 +203,13 @@ namespace OmSkimmer
 
                                 try
                                 {
-                                    Byte[] response = client.UploadValues("http://www.omfoods.com/remote.php",
+                                    Byte[] response = client.UploadValues(String.Format(@"http://www.omfoods.com/remote/v1/product-attributes/{0}", productId),
                                         new NameValueCollection()
                                         {
+                                            {"action", "add"},
                                             {"product_id", productId.ToString(CultureInfo.InvariantCulture)},
                                             {this.GetAttributeValueByName(radioNode, "name"), this.GetAttributeValueByName(radioNode, "value")},
-                                            {"w", "getProductAttributeDetails"}
+                                            {"qty[]", "1"}
                                         });
 
                                     jsonResult = System.Text.Encoding.UTF8.GetString(response);
@@ -223,24 +239,53 @@ namespace OmSkimmer
                                     OmId = productId,
                                     OmUrl = productTuple.Item2,
                                     Size = this.GetSizeDescriptionFromRadioButton(radioNode.ParentNode),
-                                    Price = omProduct.details.unformattedPrice,
-                                    Sku = omProduct.details.sku,
-                                    IsInStock = omProduct.details.instock
+                                    Price = omProduct.data.price.without_tax.value,
+                                    VariantId = omProduct.data.variantId,
+                                    IsInStock = omProduct.data.purchasable
                                 };
-
-                                if (String.IsNullOrEmpty(product.Sku))
-                                {
-                                    this.logger.WriteLineToLogFile("SKIPPING PRODUCT - NO SKU FOUND - {0}", product.Detail);
-                                }
-                                else
-                                {
-                                    productList.Add(product);
-                                    firstSize = false;
-                                }
+                                    
+                                productList.Add(product);
+                                firstSize = false;
                             }
                         }
                         else    // There are no size radio buttons, so we only have a single product to worry about
                         {
+                            Decimal price;
+
+                            // There is a price div that should give us information about the price; this div also seems to contain an "Out of stock" message 
+                            // if a product is out of stock. Let's see if we can get it.
+                            HtmlNode priceDiv = this.GetSingleDescendantByTypeAndAttribute(productMainNode, "div",
+                                "class", SingleSizePriceDivClassName);
+                            if (priceDiv == null)
+                            {
+                                this.logger.WriteLineToLogFile("CANNOT FIND {0} PRICE DIV IN THE MAIN PRODUCT ELEMENT", SingleSizePriceDivClassName);
+                                continue;
+                            }
+                            
+                            // If the price div contains a <p> element that starts with "Out of stock", we can set the price to 0.00,
+                            // otherwise we'll try to parse the price out of a child div
+                            HtmlNode outOfStockParagraph = priceDiv.Element("p");
+                            if (outOfStockParagraph != null &&
+                                outOfStockParagraph.InnerText.ToLower().Contains("out of stock"))
+                            {
+                                price = 0.00m;
+                            }
+                            else
+                            {
+                                HtmlNode priceDetailSpan = this.GetSingleDescendantByTypeAndAttribute(priceDiv, "span",
+                                    "class", SingleSizePriceDetailSpanClassName);
+                                if (priceDetailSpan == null)
+                                {
+                                    this.logger.WriteLineToLogFile("CANNOT FIND {0} PRICE DETAIL SPAN IN THE MAIN PRICE DIV", SingleSizePriceDetailSpanClassName);
+                                    continue;
+                                }
+
+                                if (!Decimal.TryParse(priceDetailSpan.InnerText.Trim().TrimStart('$'), out price))
+                                {
+                                    price = 0.00m;
+                                }
+                            }
+                            
                             Product product = new Product
                             {
                                 Name = productTuple.Item1,
@@ -248,22 +293,13 @@ namespace OmSkimmer
                                 Category = categoryTuple.Item1,
                                 OmId = productId,
                                 OmUrl = productTuple.Item2,
-                                Sku = this.GetSku(productMainNode),
-                                Price = this.GetPrice(productPage.DocumentNode)
+                                Price = price,
+                                IsInStock = price > 0.00m
                             };
-                            // Hacky way to determine if product is out of stock
-                            product.IsInStock = product.Price > 0.00m
-                                && !productPage.ToString().Contains(OutOfStockHack);
-                            // product.Size is going to be empty if this is the only size available
 
-                            if (String.IsNullOrEmpty(product.Sku))
-                            {
-                                this.logger.WriteLineToLogFile("SKIPPING PRODUCT - NO SKU FOUND - {0}", product.Detail);
-                            }
-                            else
-                            {
-                                productList.Add(product);
-                            }
+                            // product.Size and product.VariantId are going to be empty if this is the only size available
+
+                            productList.Add(product);
                         }
 
                         if (this.numberToProcess > 0 && ++productsProcessed >= this.numberToProcess)
@@ -345,6 +381,48 @@ namespace OmSkimmer
         }
 
         /// <summary>
+        /// Gets a single descendant of the given node that has the given type and attribute values.
+        /// </summary>
+        /// <param name="parentNode">Parent node</param>
+        /// <param name="descendantType">HTML tag type to look for</param>
+        /// <param name="attributeName">Attribute name to look for</param>
+        /// <param name="attributeValue">Attribute value to look for</param>
+        /// <param name="strictComparison">Optional value to match the attribute value exactly</param>
+        /// <returns>Single descendant of the given node matching the supplied values. If a descendant is not found, or if more than one are found, returns null</returns>
+        private HtmlNode GetSingleDescendantByTypeAndAttribute(HtmlNode parentNode, String descendantType, String attributeName, String attributeValue, Boolean strictComparison = false)
+        {
+            try
+            {
+                return
+                    this.GetDescendantListByTypeAndAttribute(parentNode, descendantType, attributeName, attributeValue,
+                        strictComparison).Single();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets a single descendant of the given node that has the given type and contains the given attribute, regardless of the attribute's value.
+        /// </summary>
+        /// <param name="parentNode">Parent node</param>
+        /// <param name="descendantType">HTML tag type to look for</param>
+        /// <param name="attributeName">Attribute name to look for</param>
+        /// <returns>Single descendant of the given node matching the supplied values. If a descendant is not found, or if more than one are found, returns null</returns>
+        private HtmlNode GetSingleDescendantByTypeWithAttribute(HtmlNode parentNode, String descendantType, String attributeName)
+        {
+            try
+            {
+                return parentNode.Descendants(descendantType).Single(d => d.Attributes.Contains(attributeName));
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Gets all descendants of the given node that have the given type and class name
         /// </summary>
         /// <param name="parentNode">Parent node</param>
@@ -355,19 +433,6 @@ namespace OmSkimmer
         private List<HtmlNode> GetDescendantListByClassName(HtmlNode parentNode, String descendantType, String className, Boolean strictComparison = false)
         {
             return this.GetDescendantListByTypeAndAttribute(parentNode, descendantType, "class", className, strictComparison);
-        }
-
-        /// <summary>
-        /// Gets all descendants of the given node that have the given type and itemprop attribute value
-        /// </summary>
-        /// <param name="parentNode">Parent node</param>
-        /// <param name="descendantType">HTML tag type to look for</param>
-        /// <param name="itempropValue">Itemprop attribute value to look for</param>
-        /// <param name="strictComparison">Optional value to match the attribute value exactly</param>
-        /// <returns>List of matching node descendants</returns>
-        private List<HtmlNode> GetDescendantListByItempropName(HtmlNode parentNode, String descendantType, String itempropValue, Boolean strictComparison = false)
-        {
-            return this.GetDescendantListByTypeAndAttribute(parentNode, descendantType, "itemprop", itempropValue, strictComparison);
         }
 
         /// <summary>
@@ -394,87 +459,22 @@ namespace OmSkimmer
             {
                 tupleList.AddRange(
                     categoryNode.Descendants("a")
-                        .Select(node => Tuple.Create(node.InnerText, node.Attributes["href"].Value)));
+                        .Select(node => Tuple.Create(node.InnerText.Replace('•', '&'), node.Attributes["href"].Value)));
             }
             return tupleList;
         }
 
         /// <summary>
-        /// Parses the product name from the main product div element or the main product page title
-        /// </summary>
-        /// <param name="productPage">Entire product page document</param>
-        /// <param name="productMainNode">Main product div node</param>
-        /// <returns>Product name parsed from the page/div supplied</returns>
-        //private String GetProductName(HtmlDocument productPage, HtmlNode productMainNode)
-        //{
-        //    // The product name should be in the main product div in a <h1> tag with itemprop="name" attribute
-        //    String productName = String.Empty;
-        //    HtmlNode nameNode = this.GetDescendantListByItempropName(productMainNode, "h1", NameH1Itemprop, true).FirstOrDefault();
-        //    if (nameNode != null)
-        //    {
-        //        productName = nameNode.InnerText;
-        //    }
-        //    else // If the name node is not present, we can get the name from the title 
-        //    {
-        //        HtmlNode titleNode = productPage.DocumentNode.Descendants("title").SingleOrDefault();
-        //        // This will throw an exception if there isn't one. Would FirstOrDefault be better?
-        //        if (titleNode != null)
-        //        {
-        //            // The title seems to end with "... - Organic Matters", so let's strip that off if it's there
-        //            productName = titleNode.InnerText;
-        //            if (productName.EndsWith(" - Organic Matters", StringComparison.OrdinalIgnoreCase))
-        //            {
-        //                productName = productName.Substring(0,
-        //                    productName.IndexOf(" - Organic Matters", StringComparison.OrdinalIgnoreCase));
-        //            }
-        //        }
-        //    }
-
-        //    return productName;
-        //}
-
-        /// <summary>
         /// Parses the product description - including HTML markup - from the main product page
         /// </summary>
         /// <param name="productPage">Entire product page document</param>
-        /// <returns>Product name parsed from the page/div supplied</returns>
+        /// <returns>Product description parsed from the page/div supplied</returns>
         private String GetProductDescription(HtmlDocument productPage)
         {
-            HtmlNode descriptionNode = this.GetDescendantListByClassName(productPage.DocumentNode, "div",
-                ProductDescriptionClassName).FirstOrDefault();
+            HtmlNode descriptionNode = this.GetSingleDescendantByTypeAndAttribute(productPage.DocumentNode, "div",
+                "class", ProductDescriptionClassName);
 
             return descriptionNode == null ? String.Empty : descriptionNode.InnerHtml.Trim();
-        }
-
-        /// <summary>
-        /// Gets the Organic Matters product ID from the main product div node
-        /// </summary>
-        /// <param name="productNode">Main product div node</param>
-        /// <returns>Organic Matters product ID</returns>
-        private Int32 GetOmProductId(HtmlNode productNode)
-        {
-            // Organic Matters product ID can come from several places on the page; a hidden input seems to be a good place
-            Int32 productId;
-            HtmlNode productIdNode = productNode.Descendants("input").FirstOrDefault(
-                d => d.Attributes.Contains("type") && d.Attributes["type"].Value.Equals("hidden", StringComparison.Ordinal)
-                    && d.Attributes.Contains("name") && d.Attributes["name"].Value.Equals("product_id", StringComparison.Ordinal)
-                    && d.Attributes.Contains("value"));
-            if (productIdNode == null || !Int32.TryParse(productIdNode.Attributes["value"].Value, out productId))
-            {
-                productId = -1;
-            }
-            return productId;
-        }
-
-        /// <summary>
-        /// Gets the product SKU  from the main product div node
-        /// </summary>
-        /// <param name="productNode">Main product div node</param>
-        /// <returns>Product SKU string</returns>
-        private String GetSku(HtmlNode productNode)
-        {
-            HtmlNode skuNode = this.GetDescendantListByItempropName(productNode, "span", SkuSpanItemprop, true).FirstOrDefault();
-            return skuNode == null ? String.Empty : skuNode.InnerText.Trim();
         }
 
         /// <summary>
@@ -489,49 +489,9 @@ namespace OmSkimmer
                 return String.Empty;
             }
 
-            HtmlNode spanSizeName = this.GetDescendantListByClassName(labelNode, "span", "name", true).FirstOrDefault();
+            HtmlNode spanSizeName = this.GetDescendantListByClassName(labelNode, "span", "form-label-text", true).FirstOrDefault();
             return spanSizeName == null ? String.Empty : spanSizeName.InnerText;
         }
-
-        /// <summary>
-        /// Gets the product price from the main product div node
-        /// </summary>
-        /// <param name="productNode">Main product div node</param>
-        /// <returns>Product price</returns>
-        private Decimal GetPrice(HtmlNode productNode)
-        {
-            String priceString = String.Empty;
-            
-            // Get the price detail div. There should only be one. This is a div with class containing PriceClassName.
-            HtmlNode priceRowNode = this.GetDescendantListByClassName(productNode, "div", PriceClassName, true).FirstOrDefault();
-            if (priceRowNode == null)
-            {
-                this.logger.WriteLineToLogFile("Price row div not found.");
-            }
-            else
-            {
-                // Get the value of the content attribute of the price value meta tag from the price row div. There should only be one.
-                HtmlNode priceNode = priceRowNode.Descendants("meta")
-                    .FirstOrDefault(d => d.Attributes.Contains("itemprop") && d.Attributes.Contains("content")
-                        && d.Attributes["itemprop"].Value.Equals(PriceMetaItemprop, StringComparison.Ordinal));
-                if (priceNode == null)
-                {
-                    this.logger.WriteLineToLogFile("Price meta tag not found.");
-                }
-                else
-                {
-                    priceString = priceNode.Attributes["content"].Value;
-                    if (priceString.StartsWith("$", StringComparison.Ordinal))
-                    {
-                        priceString = priceString.Substring(1);
-                    }
-                }
-            }
-
-            Decimal price;
-            return !String.IsNullOrEmpty(priceString) && Decimal.TryParse(priceString, out price) ? price : 0.00m;
-        }
-
 
         #endregion Helper Methods
 
