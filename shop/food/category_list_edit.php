@@ -50,11 +50,10 @@ function listCategoriesEdit($parent_id, $level, $parent_category_name)
     $categories_exist = '';
     // Get all root categories, making sure the Bulk Items category is always listed last
     $query = '
-      SELECT *,
-        CASE WHEN category_name = \'Bulk Items\' THEN 1 ELSE 0 END AS \'is_bulk\'
+      SELECT *
       FROM '.TABLE_CATEGORY.'
       WHERE parent_id='.mysql_real_escape_string ($parent_id).'
-      ORDER BY CASE WHEN category_name = \'Bulk Items\' THEN (SELECT MAX(sort_order) + 1 FROM kvfc.kvfc_categories) ELSE sort_order END, category_name;';
+      ORDER BY CASE WHEN is_bulk = 1 THEN (SELECT MAX(sort_order) + 1 FROM kvfc.kvfc_categories) ELSE sort_order END, category_name;';
     $sql = @mysql_query($query, $connection) or die("Couldn't execute category query: $query<br\>\n");
     if (mysql_affected_rows($connection) > 0)
     { // There are more categories (or subcategories) to look at
@@ -120,10 +119,11 @@ function listCategoriesEdit($parent_id, $level, $parent_category_name)
 
     $query2 = '
         SELECT *,
-	    CASE WHEN (SELECT IFNULL(category_name, \'\') FROM '.TABLE_CATEGORY.' WHERE category_id = '.TABLE_SUBCATEGORY.'.category_id) = \'Bulk Items\' THEN 1 ELSE 0 END AS \'is_bulk\'
+	    IFNULL('.TABLE_CATEGORY.'.is_bulk, 0) AS \'is_bulk\'
         FROM '.TABLE_SUBCATEGORY.'
-        WHERE category_id = "'.mysql_real_escape_string($parent_id).'"
-        ORDER BY subcategory_name';
+        LEFT JOIN '.TABLE_CATEGORY.' USING (category_id)
+        WHERE '.TABLE_SUBCATEGORY.'.category_id = "'.mysql_real_escape_string($parent_id).'"
+        ORDER BY '.TABLE_SUBCATEGORY.'.subcategory_name';
     $sql2 = @mysql_query($query2, $connection) or die("Couldn't execute subcategory query: $query2<br/>\n");
     $list_html .= '<ul class="cat'.$level.'">';
     while ($row2 = mysql_fetch_array($sql2))
@@ -159,9 +159,10 @@ if ($_GET['action'] == 'Edit')
         $query = '
         SELECT 
             '.TABLE_SUBCATEGORY.'.*,
-            IFNULL('.TABLE_CATEGORY.'.category_name, \'\') AS \'category_name\'
+	    IFNULL('.TABLE_CATEGORY.'.category_name, \'\') AS \'category_name\',
+	    IFNULL('.TABLE_CATEGORY.'.is_bulk, 0) AS \'is_bulk\'
         FROM '.TABLE_SUBCATEGORY.'
-        LEFT OUTER JOIN '.TABLE_CATEGORY.' USING (category_id)
+        LEFT JOIN '.TABLE_CATEGORY.' USING (category_id)
         WHERE '.TABLE_SUBCATEGORY.'.subcategory_id = '.mysql_real_escape_string($_GET['subcategory_id']).'
         ORDER BY '.TABLE_SUBCATEGORY.'.subcategory_name';
         $sql = @mysql_query($query, $connection) or die("Couldn't execute subcategory Edit query: $query<br>\n");
@@ -171,7 +172,7 @@ if ($_GET['action'] == 'Edit')
         $taxable_subcategory = $row['taxable'];
         $old_parent_id = $row['category_id'];
         $category_name = $row['category_name'];
-        $is_bulk = ($category_name == 'Bulk Items');
+        $is_bulk = $row['is_bulk'];
 
         $option_html = '';
         $return_value = listCategoriesEdit (0, 1, "All Categories");
@@ -254,6 +255,7 @@ if ($_GET['action'] == 'Edit')
         $category_desc = $row['category_desc'];
         $taxable_category = $row['taxable'];
         $old_parent_id = $row['parent_id'];
+        $is_bulk = $row['is_bulk'];
         $option_html = '';
         $return_value = listCategoriesEdit (0, 1, "All Categories");
         $option_html = $return_value[1];
@@ -273,7 +275,6 @@ if ($_GET['action'] == 'Edit')
         $row = mysql_fetch_array($sql);
         $number_of_cats = $number_of_cats + $row['count'];
 
-        $is_bulk = ($category_name == 'Bulk Items');
         // The category is only editable if it is not bulk; no need to add a form tag for bulk categories
         if (!$is_bulk) 
         {

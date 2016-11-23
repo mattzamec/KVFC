@@ -75,7 +75,7 @@ if (EXCLUDE_ZERO_INV == true)
 // Distinguishing category type by name is not ideal; we should probably have a is_bulk column in the table ... 
 $show_bulk = isset($_GET['show_bulk']) && $_GET['show_bulk'] == 1;
 $where_bulk = '
-    AND '.TABLE_CATEGORY.'.category_name '.($show_bulk ? '=' : '!=').' "Bulk Items"';
+    AND '.TABLE_CATEGORY.'.is_bulk = '.($show_bulk ? '1' : '0');
 
 // Set default ORDER BY clause
 $order_by = '
