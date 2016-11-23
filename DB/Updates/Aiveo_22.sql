@@ -289,7 +289,7 @@ BEGIN
 		INSERT INTO `kvfc_subcategories` (
 			`subcategory_name`, `category_id`, `taxable`, `subcategory_fee_percent`
 		) VALUES (
-			prm_category, var_category_id, 0, 23.000
+			prm_category, var_category_id, 0, 23.333
 		);
 
 		SET var_subcategory_id = LAST_INSERT_ID();
