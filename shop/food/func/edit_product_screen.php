@@ -26,6 +26,7 @@ $sqlsc = '
   SELECT *
   FROM '.TABLE_SUBCATEGORY.', '.TABLE_CATEGORY.'
   WHERE '.TABLE_SUBCATEGORY.'.category_id = '.TABLE_CATEGORY.'.category_id
+  AND '.TABLE_CATEGORY.'.is_bulk = 0
   ORDER BY category_name ASC, subcategory_name ASC';
 $rs = @mysql_query($sqlsc, $connection) or die(debug_print ("ERROR: 906537 ", array ($sqlsc,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
 $display_subcat = '
