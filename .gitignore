@@ -1,7 +1,9 @@
 README.MD
 *.7z
-DB/
-/shop/food/product_images/
+DB/*
+!DB/Updates/
+errors.html
+/shop/food/errors.html
 /shop/sandbox.php
+/shop/food/product_images/
 /shop/nbproject/private/
-*errors.html
