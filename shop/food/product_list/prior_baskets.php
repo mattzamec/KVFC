@@ -128,12 +128,13 @@ $query = '
     AND '.NEW_TABLE_BASKET_ITEMS.'.basket_id > 0)
   LEFT JOIN '.NEW_TABLE_MESSAGES.' ON (referenced_key1 = '.NEW_TABLE_BASKET_ITEMS.'.bpid AND message_type_id =
     (SELECT message_type_id FROM '.NEW_TABLE_MESSAGE_TYPES.' WHERE description = "customer notes to producer"))
-  WHERE '.TABLE_PRODUCER.'.is_bulk = 0'.
+  WHERE '.
     $where_producer_pending.
     $where_unlisted_producer.
     $where_catsubcat.
     $where_zero_inventory.
     $where_confirmed.
+    $where_bulk.
     $where_old_basket_items.
     $where_auth.'
   GROUP BY CONCAT('.NEW_TABLE_PRODUCTS.'.product_id, "-", '.NEW_TABLE_PRODUCTS.'.product_version)
