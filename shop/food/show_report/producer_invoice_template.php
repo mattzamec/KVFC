@@ -472,10 +472,7 @@ function show_product_row(&$product, &$unique)
         $unique['total_order_fee'] += $product[$this_row]['amount'];
       }
 
-
-
-
-    // Aggregate customer fee over whole order
+    // Aggregate customer fee over whole order - may be irrelevant to producer invoice
     if ($product[$this_row]['text_key'] == 'customer fee')
       $unique['total_order_customer_fee'] += $product[$this_row]['amount'];
 

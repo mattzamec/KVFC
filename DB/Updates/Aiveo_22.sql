@@ -220,6 +220,27 @@ PREPARE stmt FROM @kvfc_categories_insert_bulk;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
+-- Set the default subcategory_fee_percent to be 10.000. This will affect all regular subcategories/products.
+SET @kvfc_subcategories_fee_percent = (SELECT IF (
+    (	SELECT DEFAULT( subcategory_fee_percent ) 
+		FROM kvfc_subcategories 
+        LIMIT 1
+	) = 10.000,
+    "SELECT 'kvfc_subcategories.subcategory_fee_percent already has default set to 10.000' AS Confirm",
+    "ALTER TABLE kvfc_subcategories ALTER COLUMN subcategory_fee_percent SET DEFAULT 10.000;"
+));
+
+PREPARE stmt FROM @kvfc_subcategories_fee_percent;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Set the customer_fee_percent for members to 0.000, since the fee will now be in subcategories.alter
+UPDATE kvfc_members SET customer_fee_percent = 0.000;
+
+-- Set the subcategory_fee_percent for subcategories to 10.000 for all existing regular categories
+UPDATE kvfc_subcategories SET subcategory_fee_percent = 10.000
+WHERE category_id NOT IN (SELECT category_id FROM kvfc_categories WHERE IFNULL(is_bulk, 0) = 1);
+
 -- Create a stored procedure that will handle a bulk product insert or update
 DELIMITER $$
 
@@ -283,13 +304,14 @@ BEGIN
     AND subcategory_name = prm_category
     LIMIT 1;
     
-    -- If subcategory doesn't exist, let's create it
+    -- If subcategory doesn't exist, let's create it.
+    -- Make sure to set the subcategory_fee_percent to 0.000 since the bulk products will already have their values marked up.
     IF var_subcategory_id IS NULL
     THEN BEGIN
 		INSERT INTO `kvfc_subcategories` (
 			`subcategory_name`, `category_id`, `taxable`, `subcategory_fee_percent`
 		) VALUES (
-			prm_category, var_category_id, 0, 23.333
+			prm_category, var_category_id, 0, 0.000
 		);
 
 		SET var_subcategory_id = LAST_INSERT_ID();

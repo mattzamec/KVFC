@@ -3,20 +3,28 @@ valid_auth('member');
 
 $view = 'adjusted';
 if ($_GET['view'] == 'original')
-  $view = 'original';
+{
+    $view = 'original';
+}
 // Check if "editable" request by Cashier who is NOT the holder of the invoice
 elseif ($_GET['view'] == 'editable' &&
-  CurrentMember::auth_type('cashier') &&
-  $member_id != $_SESSION['member_id'])
-  $view = 'editable';
+        CurrentMember::auth_type('cashier') &&
+        $member_id != $_SESSION['member_id'])
+{
+    $view = 'editable';
+}
 
 if ($view == 'original')
-  $view_original = '
+{
+    $view_original = '
     AND '.NEW_TABLE_LEDGER.'.transaction_group_id = ""
     OR ( '.NEW_TABLE_LEDGER.'.replaced_by IS NOT NULL
       AND '.NEW_TABLE_LEDGER.'.replaced_datetime <= delivery_date )';
+}
 else
-  $view_original = '';
+{
+    $view_original = '';
+}
 
 // Do not paginate invoices under any circumstances (web pages)
 $per_page = 1000000;
@@ -71,7 +79,6 @@ $query_unique = '
     '.NEW_TABLE_SITES.'.site_description,
     '.NEW_TABLE_BASKETS.'.site_id,
     '.NEW_TABLE_BASKETS.'.basket_id,
-
     (SELECT SUM(amount) FROM '.NEW_TABLE_LEDGER.' WHERE
       ((target_key = "'.mysql_real_escape_string($member_id).'"
       AND target_type = "member")
@@ -80,9 +87,6 @@ $query_unique = '
       AND text_key = "order cost"
       AND delivery_id = "'.mysql_real_escape_string($delivery_id).'"
       AND replaced_by IS NULL) AS order_cost,
-
-    /* '.NEW_TABLE_BASKETS.'.order_cost, */
-
     '.NEW_TABLE_BASKETS.'.delivery_cost,
     '.NEW_TABLE_BASKETS.'.member_id,
     '.NEW_TABLE_BASKETS.'.delivery_id,
@@ -93,19 +97,17 @@ $query_unique = '
     '.TABLE_ORDER_CYCLES.'.invoice_price,
     '.TABLE_ORDER_CYCLES.'.msg_all,
     '.TABLE_ORDER_CYCLES.'.msg_bottom
-  FROM
-    '.NEW_TABLE_BASKETS.'
+  FROM '.NEW_TABLE_BASKETS.'
   LEFT JOIN '.TABLE_MEMBER.' USING(member_id)
   LEFT JOIN '.NEW_TABLE_SITES.' USING (site_id)
   LEFT JOIN '.TABLE_ORDER_CYCLES.' USING (delivery_id)
-  WHERE
-    '.TABLE_MEMBER.'.member_id = "'.mysql_real_escape_string($member_id).'"
-    AND '.NEW_TABLE_BASKETS.'.delivery_id = "'.mysql_real_escape_string($delivery_id).'"';
+  WHERE '.TABLE_MEMBER.'.member_id = "'.mysql_real_escape_string($member_id).'"
+  AND '.NEW_TABLE_BASKETS.'.delivery_id = "'.mysql_real_escape_string($delivery_id).'"';
 $result_unique = mysql_query($query_unique, $connection) or die(debug_print ("ERROR: 863023 ", array ($query_unique,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
 if ($row_unique = mysql_fetch_array ($result_unique))
-  {
+{
     $unique_data = (array) $row_unique;
-  }
+}
 // Add the current view to the unique data set
 $unique_data['view'] = $view;
 
@@ -193,8 +195,7 @@ $query_product = '
         AND '.NEW_TABLE_MESSAGES.'.referenced_key1 = '.NEW_TABLE_LEDGER.'.transaction_group_id
         LIMIT 1
 	) AS adjustment_group_memo
-  FROM
-    '.NEW_TABLE_LEDGER.'
+  FROM '.NEW_TABLE_LEDGER.'
   LEFT JOIN '.NEW_TABLE_PRODUCTS.' USING(pvid)
   LEFT JOIN '.TABLE_PRODUCER.' USING(producer_id)
   LEFT JOIN '.NEW_TABLE_BASKET_ITEMS.'  USING(bpid)
@@ -270,8 +271,7 @@ $query_adjustment = '
     '.NEW_TABLE_LEDGER.'.delivery_id,
     '.NEW_TABLE_LEDGER.'.pvid,
     '.NEW_TABLE_MESSAGES.'.message AS ledger_message
-  FROM
-    '.NEW_TABLE_LEDGER.'
+  FROM '.NEW_TABLE_LEDGER.'
   LEFT JOIN '.NEW_TABLE_MESSAGES.' '.NEW_TABLE_MESSAGES.' ON
     ( '.NEW_TABLE_MESSAGES.'.referenced_key1 = '.NEW_TABLE_LEDGER.'.transaction_id
     AND '.NEW_TABLE_MESSAGES.'.message_type_id =
@@ -297,10 +297,8 @@ $query_adjustment = '
 
 // Get the balance-forward amount, if any
 $query_balance = '
-  SELECT
-    SUM(amount * IF('.NEW_TABLE_LEDGER.'.source_type = "member", 1, -1)) AS total
-  FROM
-    '.NEW_TABLE_LEDGER.'
+  SELECT SUM(amount * IF('.NEW_TABLE_LEDGER.'.source_type = "member", 1, -1)) AS total
+  FROM '.NEW_TABLE_LEDGER.'
   WHERE
     (('.NEW_TABLE_LEDGER.'.source_type = "member"
       AND '.NEW_TABLE_LEDGER.'.source_key = "'.mysql_real_escape_string($member_id).'")
@@ -313,9 +311,6 @@ $query_balance = '
 // echo "<pre>$query_balance</pre>";
 $result_balance = mysql_query($query_balance, $connection) or die(debug_print ("ERROR: 675930 ", array ($query_balance,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
 if ($row_balance = mysql_fetch_array ($result_balance))
-  {
+{
     $unique_data['balance_forward'] = $row_balance['total'];
-  }
-
-
-?>
+}

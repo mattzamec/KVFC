@@ -304,13 +304,6 @@ function open_list_top(&$product, &$unique)
     return $list_top;
   };
 
-
-
-
-// '<pre style="width:100%;height:100px;overflow:scroll;border:1px solid #000;">'.print_r($unique, true).'</pre>'.
-
-
-
 function close_list_bottom(&$product, &$adjustment, &$unique)
   {
     $this_row = $product['this_row'];
@@ -328,9 +321,9 @@ function close_list_bottom(&$product, &$adjustment, &$unique)
             <td colspan="6" align="right" style="text-align:right;"><br><b>SUBTOTAL</b></td>
             <td align="right" width="8%" style="text-align:right;"><br><b>$&nbsp;'.number_format($unique['total_order_amount'] - ($unique['invoice_price'] == 1 ? 0 : $unique['total_order_customer_fee']) - $unique['total_order_tax'], 2).'</b></td>
           </tr>'.
-($product[$this_row]['delivery_id'] >= DELIVERY_NO_PAYPAL && $unique['invoice_price'] == 0 && $unique['customer_fee_percent'] != 0 ? '
+($product[$this_row]['delivery_id'] >= DELIVERY_NO_PAYPAL && $unique['invoice_price'] == 0 && $unique['total_order_customer_fee'] != 0 ? '
           <tr>
-            <td colspan="6" align="right" style="text-align:right;"><b>+ '.number_format($unique['customer_fee_percent'], 0).'% Fee</b></td>
+            <td colspan="6" align="right" style="text-align:right;"><b>+ Coop Fee</b></td>
             <td align="right" width="8%" style="text-align:right;"><b>$&nbsp;'.number_format($unique['total_order_customer_fee'], 2).'</b></td>
           </tr>'
 : '').
@@ -500,7 +493,7 @@ function show_product_row(&$product, &$unique)
     $display_line = '';
     // Check if this is an adjusted quantity
     if ($product[$this_row]['adjustment_group_memo'] != "")
-      {
+    {
         $adjustment_class = ' adjusted';
         // Use an associative key...[$product[$this_row]['adjustment_group_memo']]...to prevent repeating memos
         $unique['adjustment_markup'][$product[$this_row]['adjustment_group_memo']] = '
@@ -508,25 +501,31 @@ function show_product_row(&$product, &$unique)
             <td colspan="2"></td>
             <td colspan="5" align="left" class="adjustment">Adjustment: '.$product[$this_row]['adjustment_group_memo'].'</td>
           </tr>';
-        }
+    }
     // Aggregate the total order cost over the whole order
     $unique['total_order_amount'] += $product[$this_row]['amount'];
     if ($unique['invoice_price'] == 1)
-      $product['total_product_amount'] += $product[$this_row]['amount'];
+    {
+        $product['total_product_amount'] += $product[$this_row]['amount'];
+    }
     // Only aggregate direct product costs
-    elseif ($product[$this_row]['text_key'] != 'customer fee')
-      $product['total_product_amount'] += $product[$this_row]['amount'];
+    elseif ($product[$this_row]['text_key'] != 'customer fee' && $product[$this_row]['text_key'] != 'subcategory fee')
+    {
+        $product['total_product_amount'] += $product[$this_row]['amount'];
+    }
 
-    // Aggregate customer fee over whole order
-    if ($product[$this_row]['text_key'] == 'customer fee')
-      $unique['total_order_customer_fee'] += $product[$this_row]['amount'];
+    // Aggregate customer fee over whole order - use a combination of customer and subcategory fee
+    if ($product[$this_row]['text_key'] == 'customer fee' || $product[$this_row]['text_key'] == 'subcategory fee')
+    {
+        $unique['total_order_customer_fee'] += $product[$this_row]['amount'];
+    }
 
     // Aggregate tax over whole order
-    if (! strpos ($product[$this_row]['text_key'], 'tax') === false)
-      {
+    if (!strpos($product[$this_row]['text_key'], 'tax') === false)
+    {
         $unique['total_order_tax'] += $product[$this_row]['amount'];
         $product['total_product_tax'] += $product[$this_row]['amount'];
-      }
+    }
 
     // If the product will be different on the next go-around
     // or if this is the last row, then show product details
