@@ -14,6 +14,7 @@ namespace OmSkimmer
         public String OmUrl { get; set; }
         public Int32 VariantId { get; set; }
         public Decimal Price { get; set; }
+        public Decimal OmPrice { get; set; }
         public Boolean IsInStock { get; set; }
 
         /// <summary>
@@ -23,8 +24,8 @@ namespace OmSkimmer
         {
             get
             {
-                return String.Format("ID: {0}, Variant ID: {1}, Name: {2}, Category: {3}, Size: {4}, Price: {5:C}, {6}",
-                    this.OmId, this.VariantId, this.Name, this.Category, this.Size, this.Price, this.IsInStock ? "In stock" : "OUT OF STOCK");
+                return String.Format("ID: {0}, Variant ID: {1}, Name: {2}, Category: {3}, Size: {4}, OM Price: {5:C}, Price: {6:C}, {7}",
+                    this.OmId, this.VariantId, this.Name, this.Category, this.Size, this.OmPrice, this.Price, this.IsInStock ? "In stock" : "OUT OF STOCK");
             }
         }
 
@@ -42,6 +43,7 @@ namespace OmSkimmer
             this.OmUrl = String.Empty;
             this.VariantId = -1;
             this.Price = 0.00m;
+            this.OmPrice = 0.00m;
             this.IsInStock = false;
         }
 

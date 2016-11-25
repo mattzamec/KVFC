@@ -186,6 +186,38 @@ namespace OmSkimmer
                             continue;
                         }
 
+                        // We need to get in-stock status from the main product information; it seems the JSON returned by AJAX
+                        // for the different sizes is not very reliable. To get this, we'll find a JavaScript snippet that appears
+                        // near the top of every page containing product information
+                        HtmlNode bcDataJsNode = this.GetDescendantListByTypeAndAttribute(productPage.DocumentNode,
+                            "script", "type", @"text/javascript").
+                            FirstOrDefault(
+                                node =>
+                                    node.InnerText.Trim().StartsWith("var BCData = {\"product_attributes\":",
+                                        StringComparison.OrdinalIgnoreCase));
+                        Boolean? isProductInStock = null;
+                        if (bcDataJsNode != null)
+                        {
+                            OmProduct mainOmProduct;
+                            try
+                            {
+                                mainOmProduct =
+                                    JsonConvert.DeserializeObject<OmProduct>(
+                                        bcDataJsNode.InnerText.Trim()
+                                            .Substring("var BCData = ".Length)
+                                            .Replace("product_attributes", "data").TrimEnd(';'));
+                            }
+                            catch
+                            {
+                                mainOmProduct = null;
+                            }
+                            if (mainOmProduct != null)
+                            {
+                                isProductInStock = mainOmProduct.data.purchasable;
+                            }
+                        }
+                        
+                        
                         // OK. Now let's see if there are any radio buttons for different sizes
                         HtmlNode sizeRadioMainDivNode = this.GetSingleDescendantByTypeWithAttribute(productMainNode, "div", SizeDivAttribute);
                         List<HtmlNode> sizeRadioNodeList = sizeRadioMainDivNode == null ? new List<HtmlNode>() :
@@ -239,9 +271,10 @@ namespace OmSkimmer
                                     OmId = productId,
                                     OmUrl = productTuple.Item2,
                                     Size = this.GetSizeDescriptionFromRadioButton(radioNode.ParentNode),
-                                    Price = omProduct.data.price.without_tax.value,
+                                    OmPrice = omProduct.data.price.without_tax.value,
+                                    Price = Math.Round(omProduct.data.price.without_tax.value / 0.75m, 3), 
                                     VariantId = omProduct.data.variantId,
-                                    IsInStock = omProduct.data.purchasable
+                                    IsInStock = isProductInStock ?? omProduct.data.purchasable
                                 };
                                     
                                 productList.Add(product);
@@ -255,7 +288,7 @@ namespace OmSkimmer
                             // There is a price div that should give us information about the price; this div also seems to contain an "Out of stock" message 
                             // if a product is out of stock. Let's see if we can get it.
                             HtmlNode priceDiv = this.GetSingleDescendantByTypeAndAttribute(productMainNode, "div",
-                                "class", SingleSizePriceDivClassName);
+                                "class", SingleSizePriceDivClassName, true);
                             if (priceDiv == null)
                             {
                                 this.logger.WriteLineToLogFile("CANNOT FIND {0} PRICE DIV IN THE MAIN PRODUCT ELEMENT", SingleSizePriceDivClassName);
@@ -293,7 +326,8 @@ namespace OmSkimmer
                                 Category = categoryTuple.Item1,
                                 OmId = productId,
                                 OmUrl = productTuple.Item2,
-                                Price = price,
+                                OmPrice = price,
+                                Price = Math.Round(price / 0.75m, 3),
                                 IsInStock = price > 0.00m
                             };
 
@@ -457,10 +491,16 @@ namespace OmSkimmer
             List<Tuple<String, String>> tupleList = new List<Tuple<String, String>>();
             foreach (HtmlNode categoryNode in nodeList)
             {
-                tupleList.AddRange(
-                    categoryNode.Descendants("a")
-                        .Select(node => Tuple.Create(node.InnerText.Replace('•', '&'), node.Attributes["href"].Value)));
+                foreach (HtmlNode anchorTag in categoryNode.Descendants("a"))
+                {
+                    String link = anchorTag.Attributes["href"].Value;
+                    if (!tupleList.Any(tpl => tpl.Item2.Equals(link)))
+                    {
+                        tupleList.Add(Tuple.Create(anchorTag.InnerText.Replace("&amp;", "&").Replace('•', '&'), link));
+                    }
+                }
             }
+            tupleList.Reverse();
             return tupleList;
         }
 

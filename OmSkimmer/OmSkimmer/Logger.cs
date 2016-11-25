@@ -192,10 +192,10 @@ namespace OmSkimmer
         {
             foreach (Product product in productList.OrderBy(p => p.Category).ThenBy(p => p.Name))
             {
-                this.CsvStream.WriteLine("{0}, {1}, {2}{3}{4}, {5}, {6}",
+                this.CsvStream.WriteLine("{0}, {1}, {2}{3}{4}, {5}, {6}, {7}",
                     product.OmId, product.VariantId, product.Name.Replace(',', '?'),
-                    String.IsNullOrEmpty(product.Size) ? String.Empty : " ", product.Size.Replace(',', '?'), product.Price.ToString("C"),
-                    product.IsInStock ? "In stock" : "OUT OF STOCK");
+                    String.IsNullOrEmpty(product.Size) ? String.Empty : " ", product.Size.Replace(',', '?'), product.OmPrice.ToString("C"),
+                    product.Price.ToString("C"), product.IsInStock ? "In stock" : "OUT OF STOCK");
             }
         }
 
