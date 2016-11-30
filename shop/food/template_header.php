@@ -322,7 +322,7 @@ else
     <div id="content">
       '.$page_title_html.'
       '.$page_subtitle_html.'
-      <div class="clear"></div>';
+      <!-- <div class="clear"></div> -->';
   }
 
 echo $content_header;
