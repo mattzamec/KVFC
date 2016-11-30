@@ -288,9 +288,9 @@ BEGIN
     IF var_category_id IS NULL
     THEN  BEGIN
 		INSERT INTO `kvfc_categories` (
-			`category_name`, `category_desc`, `taxable`, `parent_id`, `sort_order`
+			`category_name`, `category_desc`, `taxable`, `parent_id`, `sort_order`, `is_bulk`
 		) VALUES (
-			'Bulk Items', 'Bulk items from KVFC wholesale partners.', 0, 0, (SELECT MAX(sort_order) + 1 FROM kvfc_categories)
+			'Bulk Items', 'Bulk items from KVFC wholesale partners.', 0, 0, (SELECT MAX(sort_order) + 1 FROM kvfc_categories), 1
 		);
 
 		SET var_category_id = LAST_INSERT_ID();

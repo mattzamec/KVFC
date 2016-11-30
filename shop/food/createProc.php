@@ -55,15 +55,15 @@ BEGIN
     -- The Bulk Items category really should exist. If it doesn\'t for some unholy reason, let\'s create it.
     IF var_category_id IS NULL
     THEN  BEGIN
-		INSERT INTO `kvfc_categories` (
-			`category_name`, `category_desc`, `taxable`, `parent_id`, `sort_order`, `is_bulk`
-		) VALUES (
-			\'Bulk Items\', \'Bulk items from KVFC wholesale partners.\', 0, 0, (SELECT MAX(sort_order) + 1 FROM kvfc_categories), 1
-		);
+        INSERT INTO `kvfc_categories` (
+            `category_name`, `category_desc`, `taxable`, `parent_id`, `sort_order`, `is_bulk`
+        ) VALUES (
+            \'Bulk Items\', \'Bulk items from KVFC wholesale partners.\', 0, 0, (SELECT MAX(sort_order) + 1 FROM kvfc_categories), 1
+        );
 
-		SET var_category_id = LAST_INSERT_ID();
-	END;
-	END IF;
+        SET var_category_id = LAST_INSERT_ID();
+    END;
+    END IF;
     
     -- Let\'s see if the category already exists
     SELECT subcategory_id INTO var_subcategory_id
@@ -72,22 +72,23 @@ BEGIN
     AND subcategory_name = prm_category
     LIMIT 1;
     
-    -- If subcategory doesn\'t exist, let\'s create it
+    -- If subcategory doesn\'t exist, let\'s create it.
+    -- Make sure to set the subcategory_fee_percent to 0.000 since the bulk products will already have their values marked up.
     IF var_subcategory_id IS NULL
     THEN BEGIN
-		INSERT INTO `kvfc_subcategories` (
-			`subcategory_name`, `category_id`, `taxable`, `subcategory_fee_percent`
-		) VALUES (
-			prm_category, var_category_id, 0, 23.333
-		);
+        INSERT INTO `kvfc_subcategories` (
+            `subcategory_name`, `category_id`, `taxable`, `subcategory_fee_percent`
+        ) VALUES (
+            prm_category, var_category_id, 0, 0.000
+        );
 
-		SET var_subcategory_id = LAST_INSERT_ID();
-	END;
-	END IF;
+        SET var_subcategory_id = LAST_INSERT_ID();
+    END;
+    END IF;
 
     -- Now let\'s see if the SKU already exists. Try to retrieve the latest version, regardless of whether it\'s confirmed.
     SELECT
-	pvid,
+        pvid,
         product_name,
         product_description,
         subcategory_id,
@@ -96,7 +97,7 @@ BEGIN
         listing_auth_type,
         product_version
     INTO
-	var_existing_pvid,
+        var_existing_pvid,
 	var_existing_name,
 	var_existing_description,
 	var_existing_subcategory_id,
@@ -110,12 +111,12 @@ BEGIN
     LIMIT 1;
 
     IF var_existing_pvid IS NOT NULL
-        AND var_existing_name = prm_name
-	AND var_existing_description = prm_description
-	AND var_existing_subcategory_id = var_subcategory_id
-	AND var_existing_unit_price = prm_unit_price
-	AND var_existing_pricing_unit = prm_pricing_unit
-	AND CASE var_existing_auth_type WHEN \'unlisted\' THEN 1 ELSE 0 END = prm_is_unlisted
+    AND var_existing_name = prm_name
+    AND var_existing_description = prm_description
+    AND var_existing_subcategory_id = var_subcategory_id
+    AND var_existing_unit_price = prm_unit_price
+    AND var_existing_pricing_unit = prm_pricing_unit
+    AND CASE var_existing_auth_type WHEN \'unlisted\' THEN 1 ELSE 0 END = prm_is_unlisted
     THEN BEGIN
         -- If all relevant values are the same, we don\'t need to update anything, but let\'s set modified date 
         -- to indicate that the product was reviewed.
@@ -124,7 +125,7 @@ BEGIN
 	WHERE pvid = var_existing_pvid;
     END;
     ELSE BEGIN   -- Product does not exist or something has changed
-	IF var_existing_pvid IS NOT NULL    -- Product exists, so something has changed and we\'ll need to add a new version.
+        IF var_existing_pvid IS NOT NULL    -- Product exists, so something has changed and we\'ll need to add a new version.
         THEN BEGIN
             -- Mark the existing version as unconfirmed.
             UPDATE kvfc_products
@@ -160,9 +161,9 @@ BEGIN
         END;
         END IF;
 
-	-- Get the next available product version
-	SELECT IFNULL(MAX(product_version) + 1, 1) 
-	INTO var_version
+        -- Get the next available product version
+        SELECT IFNULL(MAX(product_version) + 1, 1) 
+        INTO var_version
 	FROM kvfc_products 
 	WHERE product_id = var_product_id;
 
@@ -170,7 +171,7 @@ BEGIN
             START TRANSACTION;
 
             INSERT INTO `kvfc_products`(
-                `product_id`, `product_version`, `producer_id`, `product_name`, `account_number`,
+		`product_id`, `product_version`, `producer_id`, `product_name`, `account_number`,
 		`inventory_pull`, `inventory_id`, `product_description`, `subcategory_id`, `future_delivery`,
 		`future_delivery_type`, `production_type_id`, `unit_price`, `pricing_unit`, `ordering_unit`,
 		`random_weight`, `meat_weight_type`, `minimum_weight`, `maximum_weight`, `extra_charge`,
@@ -183,7 +184,7 @@ BEGIN
 		\'\', IFNULL((SELECT production_type_id FROM kvfc_production_types WHERE prodtype = \'Certified Organic\'), 0), prm_unit_price, prm_pricing_unit, prm_pricing_unit,
                 0, NULL, 0.00, 0.00, 0.00,
 		0.00, 0, CASE WHEN prm_is_unlisted = 1 THEN \'unlisted\' ELSE \'member\' END, 0, 1,
-		0, \'\', prm_modified, prm_modified, 0,
+                0, \'\', prm_modified, prm_modified, 0,
 		0, 0, IFNULL((SELECT storage_id FROM kvfc_product_storage_types WHERE storage_code = \'NON\'), 0), prm_sku);
 
             -- If we\'re inserting the first version for a new product, let\'s make sure there is only a single record for this product ID.
@@ -202,7 +203,7 @@ BEGIN
             -- If we\'re inserting an updated version there shouldn\'t be a product ID conflict so we can commit
             IF var_check_product_insert = 1
             THEN 
-		COMMIT;
+                COMMIT;
             ELSE
             BEGIN
                 ROLLBACK;
