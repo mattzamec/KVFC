@@ -14,8 +14,6 @@ $member_id = $_SESSION['member_id'];
 $is_bulk = (isset($_POST['is_bulk']) && $_POST['is_bulk'] == 1);
 $delivery_id = $_POST['delivery_id'] ? $_POST['delivery_id'] : 
     ($is_bulk ? (new ActiveBulkCycle())->delivery_id() : (new ActiveCycle())->delivery_id());
-$basket_id = $_POST['basket_id'] ? $_POST['basket_id'] : 
-    ($is_bulk ? (new CurrentBulkBasket())->basket_id() : (new CurrentBasket())->basket_id());
 // ... from add/subtract from basket
 $product_id = $_POST['product_id'];
 $product_version = $_POST['product_version'];
@@ -32,6 +30,7 @@ if (!$delivery_id ||
 }
 
 // If a basket is not already open, then open one...
+$basket_id = $_POST['basket_id'] ? $_POST['basket_id'] : 0;
 if (!$basket_id || $basket_id <= 0)
 {
     $basket_info = open_basket (array (
