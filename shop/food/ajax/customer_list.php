@@ -10,7 +10,7 @@ include_once (__DIR__.'/../includes/func.update_basket_item.php');
 
 // Get values for this operation
 // ... from the environment
-$member_id = $_POST['member_id'];
+$member_id = $_POST['member_id'] ? $_POST['member_id'] : $_SESSION['member_id'];
 $is_bulk = (isset($_POST['is_bulk']) && $_POST['is_bulk'] == 1);
 $delivery_id = $_POST['delivery_id'] ? $_POST['delivery_id'] : 
     ($is_bulk ? (new ActiveBulkCycle())->delivery_id() : (new ActiveCycle())->delivery_id());
