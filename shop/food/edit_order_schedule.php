@@ -178,7 +178,7 @@ elseif ($action == 'start_new')
     $producer_markdown = $new_cycle->producer_markdown();
     $retail_markup = $new_cycle->retail_markup();
     $wholesale_markup = $new_cycle->wholesale_markup();
-    $is_bulk = 0;
+    $is_bulk = isset($_GET['is_bulk']) && $_GET['is_bulk'];
 
     $message = '<p class="message">Please verify the default values below before creating the new cycle.</p>';
 }

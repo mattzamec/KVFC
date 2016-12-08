@@ -160,7 +160,7 @@ $display .= '
       <b>Order Info</b>
       <ul class="fancyList1">
         <li><a href="product_list.php?type=basket&show_bulk=1">View items in bulk basket</a></li>
-        <li><a href="show_report.php?type=customer_invoice">View bulk invoice</a>&nbsp;&nbsp;<em>(Invoice is blank until after the order closes)</em></li>
+        <li><a href="show_report.php?type=customer_invoice&show_bulk=1">View bulk invoice</a>&nbsp;&nbsp;<em>(Invoice is blank until after the order closes)</em></li>
         <li class="last_of_group"><a href="past_customer_invoices.php?member_id='.$_SESSION['member_id'].'">Past bulk customer invoices</a></li>
       </ul>
       <img src="'.DIR_GRAPHICS.'invoices.png" width="32" height="32" align="left" hspace="2" alt="Available Products"><br>

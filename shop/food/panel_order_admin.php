@@ -4,6 +4,7 @@ session_start();
 valid_auth('orderex,site_admin,bulk_admin');
 
 $active_cycle = new ActiveCycle();
+$active_bulk_cycle = new ActiveBulkCycle();
 $display_admin .= '
   <table width="100%" class="compact">
     <tr valign="top">
@@ -13,11 +14,18 @@ $display_admin .= '
         <ul class="fancyList1">
             <li><a href="#" onclick="popup_src(\'edit_order_schedule.php\', \'edit_order\', \'view_order_schedule.php\');">Start a New Order Cycle</a></li>
             <li class="last_of_group"><a href="view_order_schedule.php">View/Set Ordering Schedule</a></li>
-            '.(CurrentMember::auth_type('bulk_admin') ? '<li class="last_of_group"><a href="view_order_schedule.php?show_bulk=1">View/Set Bulk Ordering Schedule</a></li>
-            ': '').'
             <li><a href="category_list_edit.php">Edit Categories and Subcategories</a></li>
             <li><a href="invoice_edittext.php">Edit Invoice Messages</a></li>
         </ul>
+        '.(CurrentMember::auth_type('bulk_admin') ? '
+        <img src="'.DIR_GRAPHICS.'logo_old.png" width="32" height="32" align="left" hspace="2" alt="Bulk Maintenance"><br>
+        <b>Bulk Maintenance</b>
+        <ul class="fancyList1">
+            <li><a href="view_order_schedule.php?show_bulk=1">View/Set Bulk Ordering Schedule</a></li>            
+            <li><a href="#" onclick="popup_src(\'edit_order_schedule.php?is_bulk=1\', \'edit_order\', \'view_order_schedule.php?show_bulk=1\');">Start a New Bulk Order Cycle</a></li>
+            <li><a href="orders_list_withtotals.php?delivery_id='.$active_bulk_cycle->delivery_id().'">Members with orders this bulk cycle (with totals)</a></li>
+            <li><a href="orders_bulk.php?delivery_id='.$active_bulk_cycle->delivery_id().'">Current bulk order</a></li>
+        </ul>': '').'
       </td>
       <td align="left" width="50%">
         <img src="'.DIR_GRAPHICS.'launch.png" width="32" height="32" align="left" hspace="2" alt="Current Delivery Cycle Functions"><br>
