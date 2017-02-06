@@ -51,7 +51,7 @@ FROM '.NEW_TABLE_BASKET_ITEMS.'
 JOIN '.NEW_TABLE_BASKETS.' ON '.NEW_TABLE_BASKETS.'.basket_id = '.NEW_TABLE_BASKET_ITEMS.'.basket_id
 JOIN '.NEW_TABLE_PRODUCTS.' ON '.NEW_TABLE_BASKET_ITEMS.'.product_id = '.NEW_TABLE_PRODUCTS.'.product_id
 AND '.NEW_TABLE_PRODUCTS.'.product_version = '.NEW_TABLE_BASKET_ITEMS.'.product_version
-WHERE '.NEW_TABLE_BASKETS.'.delivery_id = 329
+WHERE '.NEW_TABLE_BASKETS.'.delivery_id = '.$delivery_id.'
 GROUP BY 
     '.NEW_TABLE_PRODUCTS.'.product_name,
     '.NEW_TABLE_PRODUCTS.'.ordering_unit,
