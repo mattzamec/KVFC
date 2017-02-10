@@ -98,7 +98,7 @@ $page_tab = 'cashier_panel';
 include("template_header.php");
 echo '
   <!-- CONTENT BEGINS HERE -->
-  <div style="float:right;width:300px;height:26px;margin-bottom:10px;">'.delivery_selector($delivery_id).'</div>
+  <div style="float:right;width:300px;height:26px;margin-bottom:10px;">'.delivery_selector($delivery_id, false).'</div>
   '.$page_data.'
   <!-- CONTENT ENDS HERE -->';
 include("template_footer.php");

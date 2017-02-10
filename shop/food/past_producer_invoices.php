@@ -40,7 +40,7 @@ $content = '
     <td align="left">
       <h3>Previous and Current Invoices For '.($producer_id > 0 ? $business_name : 'Producers').'</h3>
       <ul>';
-$query_delieries = '
+$query_deliveries = '
   SELECT
     DISTINCT(delivery_id),
     delivery_date
@@ -52,7 +52,7 @@ $query_delieries = '
   $query_where.'
   ORDER BY
     delivery_id DESC';
-$result_deliveries = @mysql_query($query_delieries, $connection) or die("Couldn't execute query.");
+$result_deliveries = @mysql_query($query_deliveries, $connection) or die("Couldn't execute query.");
 while ( $row = mysql_fetch_array($result_deliveries) )
   {
     if ($producer_id > 0)

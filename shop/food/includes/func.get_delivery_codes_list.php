@@ -199,7 +199,6 @@ function get_delivery_codes_list ($request_data)
               {
                 if ($delivery_type == 'P')
                   {
-//                  <li class="'.$delivery_type_class.$active_class.$select_class.'" '.($select_link_href != '' ? 'onclick="javascript:location.href=\''.$select_link_href : '').'\';parent.close_delivery_selector();">
                     $display .= '
                   <li class="'.$delivery_type_class.$active_class.$select_class.'" '.($select_link_href != '' ? 'onclick="javascript:location.href=\''.$select_link_href : '').'\';">
                       <span class="site_long">'.$site_long.'</span>

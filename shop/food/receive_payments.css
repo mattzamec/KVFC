@@ -184,8 +184,6 @@ label#non_basket_payment_label {
     padding-left:0;
     }
 
-
-
   ul.cycle_history li a{
     display:block;
     padding:5px auto;
@@ -216,25 +214,28 @@ a.select_block:hover {
   text-decoration:none;
   }
 
-
-  .delivery_date {
+.delivery_date {
     display:block;
-    font-size:130%;
+    font-size:16px;
     font-weight:bold;
     color:#350;
-    }
-  .order_dates {
+}
+.delivery_date_bulk {
+    display:block;
+    font-size:16px;
+    font-weight:bold;
+    color:#c96706;
+}
+.order_dates {
     display:block;
     font-size:90%;
     color:#530;
-    }
-  .basket_qty {
+}
+.basket_qty {
     color:#000;
-    }
-
+}
 
 /* ANYTHING BELOW THIS LINE IS BOGUS */
-
 
 #foo {
   transition: height 1s;
