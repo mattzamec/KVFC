@@ -17,9 +17,6 @@ so there is no required ordering of the assignments.
 
 All system constants from the configuration file are available to this template
 
-
-
-
 ********************************************************************************
 Model for the overall product list display might look something like this:
 
@@ -193,8 +190,9 @@ function open_list_top(&$product, &$unique)
       </span>').'
           <table width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr>
-              <td align="left" valign="top"><!-- FOOTER LEFT "'.(strpos ($unique['auth_type'], 'institution') !== false ? $unique['business_name'] : '').$unique['last_name'].', '.$unique['first_name'].'" -->
-                <font size="+2"><b>'.$unique['preferred_name'].' '.(strpos ($unique['auth_type'], 'institution') !== false ? $unique['business_name'].'<br>(attn: '.$unique['first_name'].' '.$unique['last_name'].')' : '').'</b></font>
+              <td style="text-align: left; vertical-align: bottom;"><!-- FOOTER LEFT "'.(strpos ($unique['auth_type'], 'institution') !== false ? $unique['business_name'] : '').$unique['last_name'].', '.$unique['first_name'].'" -->
+                <span style="font-size: large; font-weight: bold;">'.$unique['preferred_name'].' (member ID '.$unique['member_id'].')  '.(strpos ($unique['auth_type'], 'institution') !== false ? $unique['business_name'].'<br>(attn: '.$unique['first_name'].' '.$unique['last_name'].')' : '').
+                    '<br/>'.date ("F j, Y", strtotime ($unique['delivery_date'])).'</span>
               </td>
               <td valign="top" align="right">
                 <table border="0" style="width:300px;float:right">
@@ -212,63 +210,52 @@ function open_list_top(&$product, &$unique)
               </td>
             </tr>
             <tr>
-              <td colspan="2">
-                <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                  <tr>
-                    <td align="left">
-                      <font size="+2">'.$unique['member_id'].'-'.$unique['site_short'].' ('.$unique['site_long'].')</font>
-                    </td>
-                    <td align="right" style="text-align:right;">
-                      <font size="+2">'.date ("F j, Y", strtotime ($unique['delivery_date'])).'</font>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-            <tr>
               <td colspan="2" height="20"><img class="wide-line" src="'.BASE_URL.DIR_GRAPHICS.'black_pixel.gif" width="100%" height="1" alt="divider"></td>
             </tr>
             <tr>
-              <td valign="top"><strong>Customer info</strong>'.
+              <td style="vertical-align: top;">'.
 ($unique['delivery_type'] == 'H' || $unique['delivery_type'] == 'P' ? '
-                (home):<br><br>'.$unique['address_line1'].''.
+                '.$unique['address_line1'].
 ($unique['address_line2'] != '' ? '
-                <br>'.$unique['address_line2'].''
+                <br/>'.$unique['address_line2'].''
 : '').'
-                <br>'.$unique['city'].', '.$unique['state'].', '.$unique['zip'].'<br>' :
+                <br/>'.$unique['city'].', '.$unique['state'].', '.$unique['zip'].'<br>' :
 '').
 ($unique['delivery_type'] == 'W' ? '
-                (work):<br><br>'.$unique['work_address_line1'].''.
+                '.$unique['work_address_line1'].
 ($unique['work_address_line2'] != '' ? '
-                <br>'.$unique['work_address_line2'].''
+                <br/>'.$unique['work_address_line2'].''
 : '').'
-                <br>'.$unique['work_city'].', '.$unique['work_state'].', '.$unique['work_zip'].'<br>'
-: '').
+                <br/>'.$unique['work_city'].', '.$unique['work_state'].', '.$unique['work_zip'].'<br>'
+: '').'
+              </td>
+'.
+// MZ 02/06/2017: Commenting out delivery details since there is only a single pickup location so this adds nothing.
+//              <td valign="top"><strong>Delivery/pickup details:</strong>
+//                <dl>
+//                  <dt><font face="Times New Roman">'.$unique['site_long'].'</font></dt>
+//                  <dd><pre><font face="Times New Roman">'.$unique['site_description'].'</font></pre></dd>
+//                </dl>
+//              </td>
+'             <td style="vertical-align: top; text-align: right;">'.
 ($unique['email_address'] != '' ? '
-                <br><a href="mailto:'.$unique['email_address'].'">'.$unique['email_address'].'</a>'
+                <a href="mailto:'.$unique['email_address'].'">'.$unique['email_address'].'</a><br/>'
 : '').
 ($unique['email_address_2'] != '' ? '
-                <br><a href="mailto:'.$unique['email_address_2'].'">'.$unique['email_address_2'].'</a>'
+                <a href="mailto:'.$unique['email_address_2'].'">'.$unique['email_address_2'].'</a><br/>'
 : '').
 ($unique['home_phone'] != '' ? '
-                <br>'.$unique['home_phone'] .' (home)'
+                '.$unique['home_phone'] .' (home)<br/>'
 : '').
 ($unique['work_phone'] != '' ? '
-                <br>'.$unique['work_phone'] .' (work)'
+                '.$unique['work_phone'] .' (work)<br/>'
 : '').
 ($unique['mobile_phone'] != '' ? '
-                <br>'.$unique['mobile_phone'] .' (mobile)'
+                '.$unique['mobile_phone'] .' (mobile)<br/>'
 : '').
 ($unique['fax'] != '' ? '
-                <br>'.$unique['fax'] .' (fax)'
-: '').'<br><br>
-              </td>
-              <td valign="top"><strong>Delivery/pickup details:</strong>
-                <dl>
-                  <dt><font face="Times New Roman">'.$unique['site_long'].'</font></dt>
-                  <dd><pre><font face="Times New Roman">'.$unique['site_description'].'</font></pre></dd>
-                </dl>
-              </td>
+                '.$unique['fax'] .' (fax)<br/>'
+: '').'
             </tr>
             <tr>
               <td colspan="2">
@@ -472,19 +459,6 @@ function major_product_close (&$product, &$unique)
           </tr>';
   };
 
-/************************** OPEN MINOR DIVISION ****************************/
-
-function minor_product_open(&$product, &$unique)
-  {
-    // The main thing to do is reset the product information when the product changes
-    return '';
-  };
-
-function minor_product_close (&$product, &$unique)
-  {
-    return '';
-  };
-
 /************************* LISTING FOR PRODUCT SORTS **************************/
 
 function show_product_row(&$product, &$unique)
@@ -569,50 +543,6 @@ function show_product_row(&$product, &$unique)
       }
     return $display_line;
   };
-
-// /************************* LISTING FOR PRODUCT SORTS **************************/
-// 
-// function show_adjustment_row(&$adjustment, &$unique)
-//   {
-//     $this_row = $adjustment['this_row'];
-//     $display_line = '';
-//     $show_adjustment = true;
-// 
-//     // Do not show the delivery cost. It will be included in the invoice total
-//     if ($adjustment[$this_row]['text_key'] == 'delivery cost')
-//       {
-//         $adjustment['total_delivery_cost'] += $adjustment[$this_row]['amount'];
-//         $show_adjustment = false;
-//       }
-// 
-// // //adjustment_display_section
-// //     '
-// //               <tr align="center">
-// //                 <td></td>
-// //                 <td align="right" valign="top"><b> </b>&nbsp;&nbsp;</td>
-// //                 <td width="275" align="left" valign="top" colspan="'.($data['transaction_taxed'] ? '4' : '3').'"><b>'.$data['transaction_name'].$data['taxable_product'].'</b><br>'.$data['transaction_comments'].'</td>
-// //                 <td align="right" valign="top">$'.number_format($data['transaction_amount'], 2).'</td>
-// //                 '.($data['transaction_taxed'] ? '' : '<td>&nbsp;</td>').'
-// //               </tr>'
-// // EOT;
-// 
-//     // Show every adjustment row unless specified otherwise
-//     if ($show_adjustment == true)
-//       {
-//         $unique['adjustment_total'] += $adjustment[$this_row]['amount'];
-//         $display_line = '
-//           <tr align="center">
-//             <td colspan="2" align="left">'.$adjustment[$this_row]['ledger_message'].'</td>
-//             <td colspan="2" align="left">'.$adjustment[$this_row]['text_key'].'</td>
-//             <td colspan="2">&nbsp;</td>
-//             <td align="center" valign="top">'.$adjustment[$this_row]['amount'].'</td>
-//           </tr>';
-//         $adjustment['total_listed_adjustments'] += $adjustment[$this_row]['amount'];
-//       }
-//     return $display_line;
-//   };
-// 
-/************************* LISTING FOR PRODUCT SORTS **************************/
 
 function show_adjustment_row(&$adjustment, &$unique)
   {

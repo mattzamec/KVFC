@@ -436,19 +436,6 @@ function major_product_close (&$product, &$unique)
     return $display_line;
   };
 
-/************************** OPEN MINOR DIVISION ****************************/
-
-function minor_product_open(&$product, &$unique)
-  {
-    // The main thing to do is reset the product information when the product changes
-    return '';
-  };
-
-function minor_product_close (&$product, &$unique)
-  {
-    return '';
-  };
-
 /************************* LISTING FOR PRODUCT SORTS **************************/
 
 function show_product_row(&$product, &$unique)

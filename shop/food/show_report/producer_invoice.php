@@ -16,7 +16,6 @@ $major_product_prior = $major_product.'_prior';
 $minor_product = 'member_id';
 $minor_product_prior = $minor_product.'_prior';
 $show_major_product = true;
-$show_minor_product = true;
 $row_type = 'product'; // Reflects the detail to show on each row (vs. what gets featured in the header)
 
 // Assign template file
@@ -109,11 +108,9 @@ $query_product = '
     '.NEW_TABLE_BASKET_ITEMS.'.producer_fee_percent,
     '.NEW_TABLE_BASKET_ITEMS.'.out_of_stock,
     '.NEW_TABLE_BASKET_ITEMS.'.checked_out,
-
     '.NEW_TABLE_BASKET_ITEMS.'.producer_fee_percent,
     '.TABLE_MEMBER.'.member_id,
     '.TABLE_MEMBER.'.preferred_name,
-
     '.NEW_TABLE_BASKETS.'.site_id,
     '.NEW_TABLE_BASKETS.'.basket_id,
     '.NEW_TABLE_BASKETS.'.member_id,
@@ -134,8 +131,7 @@ $query_product = '
     '.TABLE_PRODUCT_STORAGE_TYPES.'.storage_code,
     messages1.message AS customer_message,
     messages2.message AS product_message
-  FROM
-    '.NEW_TABLE_LEDGER.'
+  FROM '.NEW_TABLE_LEDGER.'
   LEFT JOIN '.NEW_TABLE_PRODUCTS.' USING(pvid)
   LEFT JOIN '.NEW_TABLE_BASKET_ITEMS.'  USING(bpid)
   LEFT JOIN '.NEW_TABLE_BASKETS.'  ON '.NEW_TABLE_BASKETS.'.basket_id = '.NEW_TABLE_BASKET_ITEMS.'.basket_id
@@ -169,58 +165,7 @@ $query_product = '
     FIND_IN_SET('.NEW_TABLE_LEDGER.'.text_key, "quantity cost,weight cost,extra charge,customer fee,producer fee,delivery cost") DESC';
 
 
-
 ////////////////////////////////////////////////////////////////////
-
-
-// Get the closing date for the last time this producer sold an item
-$query_prior_closing = '
-  SELECT
-    date_closed,
-    delivery_date
-  FROM
-    '.NEW_TABLE_BASKET_ITEMS.'
-  LEFT JOIN
-    '.NEW_TABLE_PRODUCTS.' USING(product_id,product_version)
-  LEFT JOIN
-    '.NEW_TABLE_BASKETS.' USING(basket_id)
-  LEFT JOIN
-    '.TABLE_ORDER_CYCLES.' USING(delivery_id)
-  WHERE
-    '.NEW_TABLE_PRODUCTS.'.producer_id = "'.mysql_real_escape_string($producer_id_you).'"
-    AND '.TABLE_ORDER_CYCLES.'.date_closed < (SELECT date_closed FROM '.TABLE_ORDER_CYCLES.' WHERE delivery_id = "'.mysql_real_escape_string($delivery_id).'")
-  ORDER BY
-    '.TABLE_ORDER_CYCLES.'.date_closed DESC
-  LIMIT
-    0,1';
-// echo "<!-- <pre>$query_prior_closing </pre> -->";
-$result_prior_closing = mysql_query($query_prior_closing, $connection) or die(debug_print ("ERROR: 754932 ", array ($query_prior_closing,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
-$and_since_prior_closing_date = '';
-$and_since_prior_delivery_date = '';
-$and_before_prior_delivery_date = '';
-if ($row_prior_closing = mysql_fetch_array ($result_prior_closing))
-  {
-    $unique['prior_closing'] = $row_prior_closing['date_closed'];
-    $unique['prior_delivery'] = $row_prior_closing['delivery_date'];
-    $and_since_prior_closing_date = 'AND '.NEW_TABLE_LEDGER.'.effective_datetime > "'.$unique['prior_closing'].'"';
-    $and_since_prior_delivery_date = 'AND '.NEW_TABLE_LEDGER.'.effective_datetime > "'.$unique['prior_delivery'].'"';
-    $and_before_prior_delivery_date = 'AND '.NEW_TABLE_LEDGER.'.effective_datetime < "'.$unique['prior_delivery'].'"';
-  }
-else
-  {
-    // There was no prior delivery date, so set it to "zero"
-    $and_since_prior_delivery_date = 'AND '.NEW_TABLE_LEDGER.'.effective_datetime > "0000-00-00 00:00:00"';
-    $and_before_prior_delivery_date = 'AND '.NEW_TABLE_LEDGER.'.effective_datetime < "0000-00-00 00:00:00"';
-  }
-
-
-
-////////////////////////////////////////////////////////////////////
-
-
-// This multi-row content comprises the non-product body of the report
-// This should be expanded to include all current charges -- even those from prior orders that were enacted recently.
-
 // We want all non-product transactions that happened since the prior closing date (if there was one)
 // and until the closing of the current order... AS WELL AS all non-product transactions directly
 // associated with this order cycle
@@ -240,8 +185,7 @@ $query_adjustment = '
     '.NEW_TABLE_LEDGER.'.delivery_id,
     '.NEW_TABLE_LEDGER.'.pvid,
     '.NEW_TABLE_MESSAGES.'.message AS ledger_message
-  FROM
-    '.NEW_TABLE_LEDGER.'
+  FROM '.NEW_TABLE_LEDGER.'
   LEFT JOIN '.NEW_TABLE_MESSAGES.' ON
     ( '.NEW_TABLE_MESSAGES.'.referenced_key1 = '.NEW_TABLE_LEDGER.'.transaction_id
     AND '.NEW_TABLE_MESSAGES.'.message_type_id =
@@ -255,31 +199,28 @@ $query_adjustment = '
     AND '.NEW_TABLE_LEDGER.'.replaced_by IS NULL
     AND '.NEW_TABLE_LEDGER.'.delivery_id = "'.mysql_real_escape_string($delivery_id).'"
     AND '.NEW_TABLE_LEDGER.'.pvid IS NULL
-  ORDER BY
-    '.NEW_TABLE_LEDGER.'.effective_datetime';
+  ORDER BY '.NEW_TABLE_LEDGER.'.effective_datetime';
 
 // echo "<!-- <pre>$query_adjustment </pre> -->";
 
 // Get the balance-forward amount, if any
+// MZ 02/09/2017: Note that this was doing weird magic with effective dates and stuff; replaced with 
+// simply retrieving any outstanding balance for prior delivery IDs. Aiveo issue #33.
 $query_balance = '
   SELECT
     SUM(amount * IF('.NEW_TABLE_LEDGER.'.source_type = "producer", -1, 1)) AS total
-  FROM
-    '.NEW_TABLE_LEDGER.'
+  FROM '.NEW_TABLE_LEDGER.'
   WHERE
     (('.NEW_TABLE_LEDGER.'.source_type = "producer"
       AND '.NEW_TABLE_LEDGER.'.source_key = "'.mysql_real_escape_string($producer_id_you).'")
     OR ('.NEW_TABLE_LEDGER.'.target_type = "producer"
       AND '.NEW_TABLE_LEDGER.'.target_key = "'.mysql_real_escape_string($producer_id_you).'"))
     AND '.NEW_TABLE_LEDGER.'.replaced_by IS NULL
-    /* Only consider charges prior to the order closing time */
-    /* AND '.NEW_TABLE_LEDGER.'.effective_datetime < (SELECT date_closed FROM '.TABLE_ORDER_CYCLES.' WHERE delivery_id = "'.mysql_real_escape_string($delivery_id).'") */
-    '.$and_before_prior_delivery_date;
+    AND '.NEW_TABLE_LEDGER.'.delivery_id < '.mysql_real_escape_string($delivery_id);
+
 // echo "<pre>$query_balance</pre>";
 $result_balance = mysql_query($query_balance, $connection) or die(debug_print ("ERROR: 675930 ", array ($query_balance,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
 if ($row_balance = mysql_fetch_array ($result_balance))
-  {
+{
     $unique_data['balance_forward'] = $row_balance['total'];
-  }
-
-?>
+}

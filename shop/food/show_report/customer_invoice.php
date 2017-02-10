@@ -14,25 +14,13 @@ elseif ($_GET['view'] == 'editable' &&
     $view = 'editable';
 }
 
-if ($view == 'original')
-{
-    $view_original = '
-    AND '.NEW_TABLE_LEDGER.'.transaction_group_id = ""
-    OR ( '.NEW_TABLE_LEDGER.'.replaced_by IS NOT NULL
-      AND '.NEW_TABLE_LEDGER.'.replaced_datetime <= delivery_date )';
-}
-else
-{
-    $view_original = '';
-}
-
 // Do not paginate invoices under any circumstances (web pages)
 $per_page = 1000000;
 
 // Assign page tab and title information
-$page_title_html = '<span class="title">Basket</span>';
-$page_subtitle_html = '<span class="subtitle">Basket Items</span>';
-$page_title = 'Basket: Basket Items';
+$page_title_html = '<span class="title">Customer Invoice</span>';
+$page_subtitle_html = '';
+$page_title = 'Customer Invoice';
 $page_tab = 'shopping_panel';
 
 // Set display groupings
@@ -41,7 +29,6 @@ $major_product_prior = $major_product.'_prior';
 $minor_product = 'product_id';
 $minor_product_prior = $minor_product.'_prior';
 $show_major_product = true;
-$show_minor_product = true;
 $row_type = 'product'; // Reflects the detail to show on each row (vs. what gets featured in the header)
 
 // Assign template file
@@ -207,7 +194,12 @@ $query_product = '
   WHERE
     '.NEW_TABLE_LEDGER.'.basket_id = (SELECT basket_id FROM '.NEW_TABLE_BASKETS.' WHERE member_id="'.mysql_real_escape_string($member_id).'" AND delivery_id="'.mysql_real_escape_string($delivery_id).'")
     AND ( '.NEW_TABLE_LEDGER.'.replaced_by IS NULL'.
-    $view_original.'
+    ($view == 'original'
+        ? '
+        AND '.NEW_TABLE_LEDGER.'.transaction_group_id = ""
+        OR ( '.NEW_TABLE_LEDGER.'.replaced_by IS NOT NULL AND '.NEW_TABLE_LEDGER.'.replaced_datetime <= delivery_date )'
+        : ''
+    ).'
     )
     AND '.NEW_TABLE_PRODUCTS.'.product_id IS NOT NULL
   ORDER BY
@@ -217,44 +209,9 @@ $query_product = '
 
 // echo "<pre>$query_product</pre>";
 
-// Get the closing date for this member's most recent prior order
-$query_prior_closing = '
-  SELECT
-    date_closed,
-    delivery_date
-  FROM '.NEW_TABLE_BASKETS.'
-  LEFT JOIN '.TABLE_ORDER_CYCLES.' USING(delivery_id)
-  WHERE '.NEW_TABLE_BASKETS.'.member_id = "'.mysql_real_escape_string($member_id).'"
-    AND '.TABLE_ORDER_CYCLES.'.is_bulk = 0
-    AND '.TABLE_ORDER_CYCLES.'.date_closed < (SELECT date_closed FROM '.TABLE_ORDER_CYCLES.' WHERE delivery_id = "'.mysql_real_escape_string($delivery_id).'")
-  ORDER BY '.TABLE_ORDER_CYCLES.'.date_closed DESC
-  LIMIT 1';
-// echo "<pre>$query_prior_closing </pre>";
-$result_prior_closing = mysql_query($query_prior_closing, $connection) or die(debug_print ("ERROR: 754932 ", array ($query_prior_closing,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
-$and_since_prior_closing_date = '';
-$and_since_prior_delivery_date = '';
-$and_before_prior_delivery_date = '';
-if ($row_prior_closing = mysql_fetch_array ($result_prior_closing))
-  {
-    $unique['prior_closing'] = $row_prior_closing['date_closed'];
-    $unique['prior_delivery'] = $row_prior_closing['delivery_date'];
-    $and_since_prior_closing_date = 'AND '.NEW_TABLE_LEDGER.'.effective_datetime > "'.$unique['prior_closing'].'"';
-    $and_since_prior_delivery_date = 'AND '.NEW_TABLE_LEDGER.'.effective_datetime > "'.$unique['prior_delivery'].'"';
-    $and_before_prior_delivery_date = 'AND '.NEW_TABLE_LEDGER.'.effective_datetime < "'.$unique['prior_delivery'].'"';
-  }
-else
-  {
-    // There was no prior delivery date, so set it to "zero"
-    $and_before_prior_delivery_date = 'AND '.NEW_TABLE_LEDGER.'.effective_datetime < "0000-00-00 00:00:00"';
-  }
-
-// This multi-row content comprises the non-product body of the report
-// This should be expanded to include all current charges -- even those from prior orders that were enacted recently.
-
-// We want all non-product transactions that happened since the prior closing date (if there was one)
-// and until the closing of the current order... AS WELL AS all non-product transactions directly
-// associated with this order cycle
-
+// MZ 02/09/2017: This adjustments query was using a date range in the ledger table, wreaking all kinds of havoc if 
+// payments were made at a later date. This was replaced by only retrieving payments on this delivery ID.
+// Aiveo issue #33
 $query_adjustment = '
   SELECT
     SQL_CALC_FOUND_ROWS
@@ -285,17 +242,18 @@ $query_adjustment = '
     AND '.NEW_TABLE_LEDGER.'.replaced_by IS NULL
     AND '.NEW_TABLE_LEDGER.'.amount != 0 /* no need to show null adjustments */
     AND '.NEW_TABLE_LEDGER.'.bpid IS NULL /* do not consider basket items */
-    AND (('.NEW_TABLE_LEDGER.'.effective_datetime < (SELECT delivery_date FROM '.TABLE_ORDER_CYCLES.' WHERE delivery_id = "'.mysql_real_escape_string($delivery_id).'")
-        '.$and_since_prior_delivery_date.')
-      OR ('.NEW_TABLE_LEDGER.'.delivery_id = "'.mysql_real_escape_string($delivery_id).'"
+    AND ('.NEW_TABLE_LEDGER.'.delivery_id = "'.mysql_real_escape_string($delivery_id).'"
         AND ('.NEW_TABLE_LEDGER.'.text_key = "payment received"
-          OR '.NEW_TABLE_LEDGER.'.text_key = "payment made")))
-  ORDER BY
-    '.NEW_TABLE_LEDGER.'.effective_datetime';
+          OR '.NEW_TABLE_LEDGER.'.text_key = "payment made"))
+  ORDER BY '.NEW_TABLE_LEDGER.'.effective_datetime';
 
 // echo "<pre>$query_adjustment </pre>";
 
 // Get the balance-forward amount, if any
+// MZ 02/09/2017: This was also delimted by date range instead of delivery ID
+// Instead, we look for any outstanding balances from order cycles with delivery ID less than the current one.
+// This is a bit hacky, but better than using a date range which would display balance due if payments were made 
+// after this latest order cycle opens. Aiveo issue #33.
 $query_balance = '
   SELECT SUM(amount * IF('.NEW_TABLE_LEDGER.'.source_type = "member", 1, -1)) AS total
   FROM '.NEW_TABLE_LEDGER.'
@@ -304,11 +262,10 @@ $query_balance = '
       AND '.NEW_TABLE_LEDGER.'.source_key = "'.mysql_real_escape_string($member_id).'")
     OR ('.NEW_TABLE_LEDGER.'.target_type = "member"
       AND '.NEW_TABLE_LEDGER.'.target_key = "'.mysql_real_escape_string($member_id).'"))
-    AND '.NEW_TABLE_LEDGER.'.replaced_by IS NULL
-    /* Only consider charges prior to the order closing time */
-    /* AND '.NEW_TABLE_LEDGER.'.effective_datetime < (SELECT date_closed FROM '.TABLE_ORDER_CYCLES.' WHERE delivery_id = "'.mysql_real_escape_string($delivery_id).'") */
-    '.$and_before_prior_delivery_date;
+  AND '.NEW_TABLE_LEDGER.'.replaced_by IS NULL
+  AND '.NEW_TABLE_LEDGER.'.delivery_id < '.mysql_real_escape_string($delivery_id);
 // echo "<pre>$query_balance</pre>";
+
 $result_balance = mysql_query($query_balance, $connection) or die(debug_print ("ERROR: 675930 ", array ($query_balance,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
 if ($row_balance = mysql_fetch_array ($result_balance))
 {
