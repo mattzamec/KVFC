@@ -27,7 +27,7 @@ include_once (__DIR__.'/general_functions.php');
 $database_config = array (
   'db_host'         => 'localhost',                          // Enter the db host
   'db_user'         => 'kvfc_user',                      // Enter the username for db access
-  'db_pass'         => 'kvfc_password',                  // Enter the password for db access
+  'db_pass'         => 'kvfc_Wh@tdFuK?',                  // Enter the password for db access
   'db_name'         => 'kvfc',                     // Enter the database name
   'db_prefix'       => 'kvfc_',                               // This is probably blank
   'openfood_config' => 'configuration'                       // Points to configuration table in database
