@@ -25,7 +25,7 @@ if ($_GET['action'] == 'open_basket' || $_GET['action'] == 'open_bulk_basket')
 // Get basket status information
 $query = '
   SELECT
-    SUM(quantity) AS basket_quantity,
+    SUM(IFNULL(quantity, 0)) AS basket_quantity,
     '.NEW_TABLE_BASKETS.'.basket_id
   FROM '.NEW_TABLE_BASKETS.'
   LEFT JOIN '.NEW_TABLE_BASKET_ITEMS.' ON '.NEW_TABLE_BASKETS.'.basket_id = '.NEW_TABLE_BASKET_ITEMS.'.basket_id
@@ -41,27 +41,28 @@ if ($row = mysql_fetch_object($result))
 }
 if ($active_cycle->is_open_for_ordering())
 {
+    $basket_dates = 'Order closes '.date('l F j, Y \a\t h:i:s A', strtotime($active_cycle->date_closed())).'; payment and pickup on '.date('l F j, Y', strtotime($active_cycle->delivery_date())).'.';
     if ($basket_id)
     {
-        $basket_status = '<span class="basket_status_open">Ready for shopping<br>'.$basket_quantity.' '.Inflect::pluralize_if($basket_quantity, 'item').' in basket.</span>';
+        $basket_status = '<span class="basket_status_open">Ready for shopping<br/>'.$basket_dates.'<br/>'.$basket_quantity.' '.Inflect::pluralize_if($basket_quantity, 'item').' in basket.</span>';
     }
     else
     {
           // MZ: Replaced the below prompt to select a location to just a link, since there is only one location.
           // Also, HARDCODED site_id = 1; if ever multiple sites come around, this will need to be reverted to the original.
 //        $basket_status = '<em>Use Select Location (above) to open a shopping basket</em>';
-          $basket_status = '<span class="basket_status_open"><a href="'.$_SERVER['SCRIPT_NAME'].'?action=open_basket&site_id=1&delivery_type=P">Click here to open a shopping basket.</a></span>';
+          $basket_status = '<span class="basket_status_open"><a href="'.$_SERVER['SCRIPT_NAME'].'?action=open_basket&site_id=1&delivery_type=P">Click here to open a shopping basket.</a><br/>'.$basket_dates.'</span>';
     }
 }
 else
 {
-    $basket_status = '<span class="basket_status_closed">Ordering is currently closed<br>'.$basket_quantity.' '.Inflect::pluralize_if($basket_quantity, 'item').' in basket.</span>';
+    $basket_status = '<span class="basket_status_closed">Ordering is currently closed<br/>'.$basket_quantity.' '.Inflect::pluralize_if($basket_quantity, 'item').' in basket.</span>';
 }
 
 // Get bulk basket status information
 $query = '
   SELECT
-    SUM(quantity) AS basket_quantity,
+    SUM(IFNULL(quantity, 0)) AS basket_quantity,
     '.NEW_TABLE_BASKETS.'.basket_id
   FROM '.NEW_TABLE_BASKETS.'
   LEFT JOIN '.NEW_TABLE_BASKET_ITEMS.' ON '.NEW_TABLE_BASKETS.'.basket_id = '.NEW_TABLE_BASKET_ITEMS.'.basket_id
@@ -77,16 +78,17 @@ if ($row = mysql_fetch_object($result))
 }
 if ($active_bulk_cycle->is_open_for_ordering())
 {
+    $basket_dates = 'Bulk order closes '.date('l F j, Y \a\t h:i:s A', strtotime($active_bulk_cycle->date_closed())).'; payment and pickup on '.date('l F j, Y', strtotime($active_bulk_cycle->delivery_date())).'.';
     if ($bulk_basket_id)
     {
-        $bulk_basket_status = '<span class="basket_status_open">Ready for shopping<br>'.$bulk_basket_quantity.' '.Inflect::pluralize_if($bulk_basket_quantity, 'item').' in bulk basket.</span>';
+        $bulk_basket_status = '<span class="basket_status_open">Ready for shopping.<br/>'.$basket_dates.'<br/>'.$bulk_basket_quantity.' '.Inflect::pluralize_if($bulk_basket_quantity, 'item').' in bulk basket.</span>';
     }
     else
     {
           // MZ: Replaced the below prompt to select a location to just a link, since there is only one location.
           // Also, HARDCODED site_id = 1; if ever multiple sites come around, this will need to be reverted to the original.
 //        $bulk_basket_status = '<em>Use Select Location (above) to open a shopping basket</em>';
-          $bulk_basket_status = '<span class="basket_status_open"><a href="'.$_SERVER['SCRIPT_NAME'].'?action=open_bulk_basket&site_id=1&delivery_type=P">Click here to open a bulk shopping basket.</a></span>';
+          $bulk_basket_status = '<span class="basket_status_open"><a href="'.$_SERVER['SCRIPT_NAME'].'?action=open_bulk_basket&site_id=1&delivery_type=P">Click here to open a bulk shopping basket.</a><br/>'.$basket_dates.'</span>';
     }
 }
 else
