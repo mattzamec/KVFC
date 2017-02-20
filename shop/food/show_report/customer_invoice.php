@@ -250,20 +250,22 @@ $query_adjustment = '
 // echo "<pre>$query_adjustment </pre>";
 
 // Get the balance-forward amount, if any
-// MZ 02/09/2017: This was also delimted by date range instead of delivery ID
+// MZ 02/09/2017: This was also delimited by date range instead of delivery ID
 // Instead, we look for any outstanding balances from order cycles with delivery ID less than the current one.
 // This is a bit hacky, but better than using a date range which would display balance due if payments were made 
 // after this latest order cycle opens. Aiveo issue #33.
 $query_balance = '
   SELECT SUM(amount * IF('.NEW_TABLE_LEDGER.'.source_type = "member", 1, -1)) AS total
   FROM '.NEW_TABLE_LEDGER.'
+  JOIN '.TABLE_ORDER_CYCLES.' USING (delivery_id)
   WHERE
     (('.NEW_TABLE_LEDGER.'.source_type = "member"
       AND '.NEW_TABLE_LEDGER.'.source_key = "'.mysql_real_escape_string($member_id).'")
     OR ('.NEW_TABLE_LEDGER.'.target_type = "member"
       AND '.NEW_TABLE_LEDGER.'.target_key = "'.mysql_real_escape_string($member_id).'"))
   AND '.NEW_TABLE_LEDGER.'.replaced_by IS NULL
-  AND '.NEW_TABLE_LEDGER.'.delivery_id < '.mysql_real_escape_string($delivery_id);
+  AND '.NEW_TABLE_LEDGER.'.delivery_id < '.mysql_real_escape_string($delivery_id).'
+  AND '.TABLE_ORDER_CYCLES.'.is_bulk = (SELECT is_bulk FROM '.TABLE_ORDER_CYCLES.' WHERE delivery_id = '.mysql_real_escape_string($delivery_id).')';
 // echo "<pre>$query_balance</pre>";
 
 $result_balance = mysql_query($query_balance, $connection) or die(debug_print ("ERROR: 675930 ", array ($query_balance,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
