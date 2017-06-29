@@ -112,7 +112,6 @@ BEGIN
 
     IF var_existing_pvid IS NOT NULL
     AND var_existing_name = prm_name
-    AND var_existing_description = prm_description
     AND var_existing_subcategory_id = var_subcategory_id
     AND var_existing_unit_price = prm_unit_price
     AND var_existing_pricing_unit = prm_pricing_unit
