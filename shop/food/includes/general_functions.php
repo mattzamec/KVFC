@@ -3,11 +3,86 @@
 // Include classes for ActiveCycle, CurrentBasket, and CurrentMember
 include_once (__DIR__.'/classes_base.php');
 
+/**
+ * replacement for all mysql functions from https://gist.github.com/rubo77/1db052edd8d723b59c79790b42635f1e
+ */
+if (!function_exists("mysql_connect")){
+	/* warning: fatal error "cannot redeclare" if a function was disabled in php.ini with disable_functions:
+	disable_functions =mysql_connect,mysql_pconnect,mysql_select_db,mysql_ping,mysql_query,mysql_fetch_assoc,mysql_num_rows,mysql_fetch_array,mysql_error,mysql_insert_id,mysql_close,mysql_real_escape_string,mysql_data_seek,mysql_result
+	*/
+    function mysql_connect($host, $username, $password){
+        return mysqli_connect($host, $username, $password);
+	}
+    function mysql_pconnect($host, $username, $password){
+        return mysqli_connect("p:".$host, $username, $password);
+	}
+    function mysql_select_db($db,$dbconnect){
+        return mysqli_select_db ( $dbconnect,$db );
+	}
+    function mysql_ping($dbconnect){
+        return mysqli_ping ( $dbconnect );
+	}
+    function mysql_query($stmt){
+        global $connection;
+        return mysqli_query ($connection, $stmt );
+	}
+    function mysql_fetch_assoc($erg){
+        return mysqli_fetch_assoc ($erg );
+	}
+    function mysql_num_rows($e){
+        return mysqli_num_rows ($e );
+	}
+    function mysql_affected_rows($e=NULL){
+        return mysqli_affected_rows ($e );
+	}
+    function mysql_fetch_array($e){
+        return mysqli_fetch_array ($e );
+	}
+    function mysql_fetch_object($result) {
+        return mysqli_fetch_object($result);
+    }
+    function mysql_error(){
+		global $connection;
+        return mysqli_error ($connection);
+	}
+    function mysql_insert_id($cnx){
+        return mysqli_insert_id ( $cnx );
+	}
+    function mysql_close(){
+        return true;
+	}
+    function mysql_real_escape_string($s){
+		global $connection;
+        return mysqli_real_escape_string($connection,$s);
+	}
+    function mysql_data_seek($re,$row){
+        return mysqli_data_seek($re,$row);
+	}
+    function mysql_result($res,$row=0,$col=0){ 
+        $numrows = mysqli_num_rows($res); 
+        if ($numrows && $row <= ($numrows-1) && $row >=0){
+            mysqli_data_seek($res,$row);
+            $resrow = (is_numeric($col)) ? mysqli_fetch_row($res) : mysqli_fetch_assoc($res);
+            if (isset($resrow[$col])){
+                return $resrow[$col];
+            }
+        }
+        return false;
+    }
+}
+
 // Establish a connection to the OFS database
 function connect_to_database ($database_config)
   {
     global $connection;
-    $connection = @mysql_connect($database_config['db_host'], $database_config['db_user'], $database_config['db_pass']) or die("Couldn't connect: \n".mysql_error());
+    $connection = @mysql_connect($database_config['db_host'], $database_config['db_user'], $database_config['db_pass']);
+    if (!$connection) {
+        echo 'Connection is ' . (isset($connection) ? ($connection ? "true" : "false") : "not set");
+        echo "Error: Unable to connect to MySQL." . PHP_EOL;
+        echo "Debugging errno: " . mysqli_connect_errno() . PHP_EOL;
+        echo "Debugging error: " . mysqli_connect_error() . PHP_EOL;        
+        die("Couldn't connect: \n".mysql_error());
+    }
     $db = @mysql_select_db($database_config['db_name'], $connection) or die(debug_print ("ERROR: 720349 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
   }
 
@@ -237,40 +312,6 @@ function convert_route_code($route_code_info)
     $route_code = str_replace ('()', '', $route_code);
     return $route_code;
   }
-
-// Helper function to return a prior/next delivery navigation element, depending on whether the deliveries exist
-if (!function_exists('delivery_nav'))
-{
-    function delivery_nav ($base_url, $delivery_id)
-    {
-        global $connection;
-        $query = '
-            SELECT 
-                EXISTS(SELECT 1 FROM ' . TABLE_ORDER_CYCLES . ' WHERE is_bulk = 0 AND delivery_id < ' . $delivery_id . ') AS `exists_prior`,
-                EXISTS(SELECT 1 FROM ' . TABLE_ORDER_CYCLES . ' WHERE is_bulk = 0 AND delivery_id > ' . $delivery_id . ') AS `exists_next`';
-
-        $result = @mysql_query($query, $connection) or die(debug_print ("ERROR: 864302 ", array ($query,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
-        if ($row = mysql_fetch_object($result)) {
-            $delivery_div = '  <div id="delivery_id_nav">';
-    
-            if ($row->exists_prior) {
-                $delivery_div .= '
-    <a class="prior" href="'.$base_url.($delivery_id - 1).'">&larr; PRIOR CYCLE </a>';
-            }
-            if ($row->exists_next) {
-                $delivery_div .= '
-    <a class="next" href="'.$base_url.($delivery_id + 1).'"> NEXT CYCLE &rarr;</a>';
-            }
-            $delivery_div .= '
-  </div>';
-            return $delivery_div;
-        }
-        else {
-            return '';
-        }
-    }
-}
-
 
 // SOURCE:   http://kuwamoto.org/2007/12/17/improved-pluralizing-in-php-actionscript-and-ror/
 // Thanks to http://www.eval.ca/articles/php-pluralize (MIT license)
