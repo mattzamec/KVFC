@@ -2,6 +2,7 @@ README.MD
 *.7z
 DB/*
 !DB/Updates/
+OmSkimmer/*
 errors.html
 /shop/food/errors.html
 /shop/sandbox.php
