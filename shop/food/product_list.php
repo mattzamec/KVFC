@@ -154,6 +154,13 @@ $query_limit = $list_start.', '.$pager['per_page'];
 $query .= '
   LIMIT '.$query_limit;
 
+// Aiveo issue 47 - non-members cannot view listed products. Turns out this is because there is an error
+// that gets thrown: "The SELECT would examine more than MAX_JOIN_SIZE rows". This ends up in the error.html
+// log file but nothing is displayed to the user since this beauty just eats errors up.
+// Anyway - the solution is not ideal and comes from:
+//  https://stackoverflow.com/questions/943423/mysql-the-select-would-examine-more-than-max-join-size-rows
+// Clearly, it would be preferable to make the query more efficient, but this will do for now
+mysql_query("SET SQL_BIG_SELECTS=1", $connection) or die (debug_print("ERROR: 785032 ", array("SET SQL_BIG_SELECTS=1", mysql_error()), basename(__FILE__).' LINE '.__LINE__));
 $result = mysql_query($query, $connection) or die(debug_print("ERROR: 785033 ", array($query, mysql_error()), basename(__FILE__).' LINE '.__LINE__));
 // Get the total number of rows (for pagination) -- not counting the LIMIT condition
 $query_found_rows = '

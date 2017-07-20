@@ -143,36 +143,35 @@ function row_activity_link_calc($data, $pager)
 { 
     return
         '<td class="basket_control">'.
-        ($data['order_open'] ?
-          ($data['availability'] == true ?
-            ($data['basket_quantity'] > 0 || !$data['inventory_id'] || $data['inventory_quantity'] > 0 ?
-              // ADD PRODUCT TO BASKET
-              '<form action="'.$_SERVER['SCRIPT_NAME'].'?type='.$_GET['type'].'#X'.$data['product_id'].'" method="post">
-                 <input id="add'.$data['product_id'].'X'.$data['product_version'].'" class="basket_add" type="image" name="basket_add" src="'.DIR_GRAPHICS.'basket_add.png" width="24" height="24" border="0" alt="Submit" onclick="AddToCart('.$data['product_id'].','.$data['product_version'].',\'add\'); return false;" '.($data['basket_quantity'] > 0 ? ($data['inventory_id'] && $data['inventory_quantity'] == 0 ? 'style="display:none;"' : '') : 'style="display:none;"').'>
-                 <input id="sub'.$data['product_id'].'X'.$data['product_version'].'" class="basket_sub" type="image" name="basket_sub" src="'.DIR_GRAPHICS.'basket_sub.png" width="24" height="24" border="0" alt="Submit" onclick="AddToCart('.$data['product_id'].','.$data['product_version'].',\'sub\'); return false;" '.($data['basket_quantity'] > 0 ? '' : 'style="display:none;"').'>
-                 <input type="hidden" name="product_id" value="'.$data['product_id'].'">
-                 <input type="hidden" name="product_version" value="'.$data['product_version'].'">
-                 <input type="hidden" name="producer_id" value="'.$data['producer_id'].'">
-                 <input type="hidden" name="product_id_printed" value="'.$data['product_id'].'">
-                 <input type="hidden" name="product_name" value="'.$data['product_name'].'">
-                 <input type="hidden" name="subcategory_id" value="'.$data['subcategory_id'].'">
-                 <input type="hidden" name="process_type" value="customer_list">
-                 <div class="basket_button">
-                 <input id="basket_empty'.$data['product_id'].'X'.$data['product_version'].'" class="basket" type="image" name="basket" src="'.DIR_GRAPHICS.'basket-egi_add.png" width="48" height="48" border="0" alt="Submit" onClick="AddToCart('.$data['product_id'].','.$data['product_version'].',\'add\'); return false;" '.($data['basket_quantity'] > 0 ? 'style="display:none;"' : '').'>
-                 <img id="basket_full'.$data['product_id'].'X'.$data['product_version'].'" class="basket" src="'.DIR_GRAPHICS.'basket-fcs.png" width="48" height="48" border="0" '.($data['basket_quantity'] > 0 ? '' : 'style="display:none;"').'>
-                 </div>
-               </form>
-               <span id="in_basket'.$data['product_id'].'X'.$data['product_version'].'" class="in_basket" '.($data['basket_quantity'] > 0 ? '' : 'style="display:none;"').'><span id="basket_qty'.$data['product_id'].'X'.$data['product_version'].'" class="basket_qty">'.$data['basket_quantity'].'</span> in basket</span>'
-              :
-              // NOT ABLE TO ADD ANYTHING
-              ''
-            )
-          :
-          'Unavailable for '.$data['site_long']
-          )
-        :
-        'Ordering is currently closed'
-        ).
+        ($_SESSION['member_id'] ?
+            ($data['order_open'] ?
+              ($data['availability'] == true ?
+                ($data['basket_quantity'] > 0 || !$data['inventory_id'] || $data['inventory_quantity'] > 0 ?
+                  // ADD PRODUCT TO BASKET
+                  '<form action="'.$_SERVER['SCRIPT_NAME'].'?type='.$_GET['type'].'#X'.$data['product_id'].'" method="post">
+                     <input id="add'.$data['product_id'].'X'.$data['product_version'].'" class="basket_add" type="image" name="basket_add" src="'.DIR_GRAPHICS.'basket_add.png" width="24" height="24" border="0" alt="Submit" onclick="AddToCart('.$data['product_id'].','.$data['product_version'].',\'add\'); return false;" '.($data['basket_quantity'] > 0 ? ($data['inventory_id'] && $data['inventory_quantity'] == 0 ? 'style="display:none;"' : '') : 'style="display:none;"').'>
+                     <input id="sub'.$data['product_id'].'X'.$data['product_version'].'" class="basket_sub" type="image" name="basket_sub" src="'.DIR_GRAPHICS.'basket_sub.png" width="24" height="24" border="0" alt="Submit" onclick="AddToCart('.$data['product_id'].','.$data['product_version'].',\'sub\'); return false;" '.($data['basket_quantity'] > 0 ? '' : 'style="display:none;"').'>
+                     <input type="hidden" name="product_id" value="'.$data['product_id'].'">
+                     <input type="hidden" name="product_version" value="'.$data['product_version'].'">
+                     <input type="hidden" name="producer_id" value="'.$data['producer_id'].'">
+                     <input type="hidden" name="product_id_printed" value="'.$data['product_id'].'">
+                     <input type="hidden" name="product_name" value="'.$data['product_name'].'">
+                     <input type="hidden" name="subcategory_id" value="'.$data['subcategory_id'].'">
+                     <input type="hidden" name="process_type" value="customer_list">
+                     <div class="basket_button">
+                     <input id="basket_empty'.$data['product_id'].'X'.$data['product_version'].'" class="basket" type="image" name="basket" src="'.DIR_GRAPHICS.'basket-egi_add.png" width="48" height="48" border="0" alt="Submit" onClick="AddToCart('.$data['product_id'].','.$data['product_version'].',\'add\'); return false;" '.($data['basket_quantity'] > 0 ? 'style="display:none;"' : '').'>
+                     <img id="basket_full'.$data['product_id'].'X'.$data['product_version'].'" class="basket" src="'.DIR_GRAPHICS.'basket-fcs.png" width="48" height="48" border="0" '.($data['basket_quantity'] > 0 ? '' : 'style="display:none;"').'>
+                     </div>
+                   </form>
+                   <span id="in_basket'.$data['product_id'].'X'.$data['product_version'].'" class="in_basket" '.($data['basket_quantity'] > 0 ? '' : 'style="display:none;"').'><span id="basket_qty'.$data['product_id'].'X'.$data['product_version'].'" class="basket_qty">'.$data['basket_quantity'].'</span> in basket</span>'
+                  :
+                  // NOT ABLE TO ADD ANYTHING
+                  ''
+                )
+              : 'Unavailable for '.$data['site_long'])
+            : 'Ordering is currently closed' )
+        : 'Log in to order' )
+        .
         (isset ($data['delivery_date']) ? '<span class="prior_order">Last ordered<br>'.$data['delivery_date'].'</span>' : '').
         '</td>';
 }
