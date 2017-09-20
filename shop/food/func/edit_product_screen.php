@@ -22,11 +22,16 @@ function format_help_link ($target)
   }
 
 // Get the category/subcategory list and create a drop-down list
+// MZ - Aiveo #35: This is an upsetting hack, but it's quick and it'll do.
+// For producer ID 40 - this is KVFC On The Shelf - we only allow the user to assign a product to
+// a Bulk subcategory. Otherwise show only regular subcategories. This is because the On The Shelf
+// products already have the 10% co-op fee included in the price, just like bulk products (regular
+// subcategories have a 10% markup attached to them, which ends up doubling the markup for On The Shelf products)
 $sqlsc = '
   SELECT *
   FROM '.TABLE_SUBCATEGORY.', '.TABLE_CATEGORY.'
   WHERE '.TABLE_SUBCATEGORY.'.category_id = '.TABLE_CATEGORY.'.category_id
-  AND '.TABLE_CATEGORY.'.is_bulk = 0
+  AND '.TABLE_CATEGORY.'.is_bulk = '.($product_info['producer_id'] == 40 ? '1' : '0').'
   ORDER BY category_name ASC, subcategory_name ASC';
 $rs = @mysql_query($sqlsc, $connection) or die(debug_print ("ERROR: 906537 ", array ($sqlsc,mysql_error()), basename(__FILE__).' LINE '.__LINE__));
 $display_subcat = '
